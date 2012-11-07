@@ -1,0 +1,891 @@
+C51 COMPILER V7.06   F34X_USB_ISR                                                          08/25/2012 02:16:55 PAGE 1   
+
+
+C51 COMPILER V7.06, COMPILATION OF MODULE F34X_USB_ISR
+OBJECT MODULE PLACED IN F34x_USB_ISR.OBJ
+COMPILER INVOKED BY: c:\Keil\C51\BIN\c51.exe F34x_USB_ISR.c DB OE BR
+
+stmt level    source
+
+   1          //-----------------------------------------------------------------------------
+   2          // F34x_USB_ISR.c
+   3          //-----------------------------------------------------------------------------
+   4          // Copyright 2005 Silicon Laboratories, Inc.
+   5          // http://www.silabs.com
+   6          //
+   7          // Program Description:
+   8          //
+   9          // Source file for USB firmware. Includes the following routines:
+  10          //
+  11          // - USB_ISR(): Top-level USB interrupt handler. All USB handler
+  12          //    routines are called from here.
+  13          // - Endpoint0(): Endpoint0 interrupt handler.
+  14          // - BulkOrInterruptOut(): Bulk or Interrupt OUT interrupt
+  15          //    handler.
+  16          // - BulkOrInterruptIn(): Places DataToWrite on the IN FIFO.
+  17          // - USBReset (): USB Reset event handler.
+  18          // - State_Machine(): USB state machine
+  19          // - Receive_Setup(): Determine whether a read or write request
+  20          //    been received and initializes variables accordingly.
+  21          // - Receive_File(): Receives and saves data
+  22          // - Page_Erase(): Erases a page of FLASH
+  23          // - Page_Write(): Writes to a page of FLASH
+  24          //
+  25          //
+  26          // How To Test:    See Readme.txt
+  27          //
+  28          //
+  29          // FID:            34X000007
+  30          // Target:         C8051F34x
+  31          // Tool chain:     Keil C51 7.50 / Keil EVAL C51
+  32          //                 Silicon Laboratories IDE version 2.6
+  33          // Command Line:   See Readme.txt
+  34          // Project Name:   F34x_USB_Bulk
+  35          //
+  36          //
+  37          // Release 1.3
+  38          //    -All changes by GP
+  39          //    -21 NOV 2005
+  40          //    -Changed revision number to match project revision
+  41          //     No content changes to this file
+  42          //    -Modified file to fit new formatting guidelines
+  43          //    -Changed file name from usb_isr.c
+  44          //
+  45          //
+  46          // Release 1.2
+  47          //    -Initial Revision (JS/CS/JM)
+  48          //    -XX OCT 2003
+  49          //
+  50          
+  51          //-----------------------------------------------------------------------------
+  52          // Includes
+  53          //-----------------------------------------------------------------------------
+  54          
+  55          #include "c8051F340.h"
+C51 COMPILER V7.06   F34X_USB_ISR                                                          08/25/2012 02:16:55 PAGE 2   
+
+  56          #include "F34x_USB_Registers.h"
+  57          #include "F34x_USB_Structs.h"
+  58          #include "F34x_USB_Main.h"
+  59          #include "F34x_USB_Descriptors.h"
+  60          #include "F34x_USB_Config.h"
+  61          #include "F34x_USB_Request.h"
+  62          
+  63          //-----------------------------------------------------------------------------
+  64          // Extern Global Variables
+  65          //-----------------------------------------------------------------------------
+  66          
+  67          extern DEVICE_STATUS  gDeviceStatus;
+  68          extern EP0_COMMAND    gEp0Command;
+  69          extern EP_STATUS      gEp0Status;
+  70          extern EP_STATUS      gEp1InStatus;
+  71          extern EP_STATUS      gEp2OutStatus;
+  72          
+  73          //-----------------------------------------------------------------------------
+  74          // Global Constants
+  75          //-----------------------------------------------------------------------------
+  76          
+  77          //  Constants Definitions
+  78          #define NUM_STG_PAGES   20             // Total number of flash pages to
+  79                                                 // be used for file storage
+  80          #define MAX_BLOCK_SIZE  64             // Use the maximum block size of 64
+  81          #define FLASH_PAGE_SIZE 512            // Size of each flash page
+  82          #define BLOCKS_PR_PAGE  FLASH_PAGE_SIZE/MAX_BLOCK_SIZE
+  83          #define MAX_NUM_BLOCKS  BLOCKS_PR_PAGE*NUM_STG_PAGES
+  84          
+  85          // UINT type definition
+  86          #ifndef _UINT_DEF_
+              #define _UINT_DEF_
+              typedef unsigned int UINT;
+              #endif                                 // _UINT_DEF_
+  90          
+  91          // BYTE type definition
+  92          #ifndef _BYTE_DEF_
+              #define _BYTE_DEF_
+              typedef unsigned char BYTE;
+              #endif                                 // _BYTE_DEF_ 
+  96          
+  97          //  Message Types
+  98          #define READ_MSG    0x00    // Message types for communication with host
+  99          #define WRITE_MSG   0x01
+ 100          #define SIZE_MSG    0x02
+ 101          
+ 102          //  Machine States
+ 103          #define ST_WAIT_DEV 0x01    // Wait for application to open a device instance
+ 104          #define ST_IDLE_DEV 0x02    // Device is open, wait for Setup Message from host
+ 105          #define ST_RX_SETUP 0x04    // Received Setup Message, decode and wait for data
+ 106          #define ST_RX_FILE  0x08    // Receive file data from host
+ 107          #define ST_TX_FILE  0x10    // Transmit file data to host
+ 108          #define ST_TX_ACK   0x20    // Transmit ACK 0xFF to host after every 8 packets
+ 109          #define ST_ERROR    0x80    // Error state
+ 110          
+ 111          
+ 112          typedef struct {            //  Structure definition of a block of data
+ 113              BYTE Piece[MAX_BLOCK_SIZE];
+ 114          }   BLOCK;
+ 115          
+ 116          typedef struct {            //  Structure definition of a flash memory page
+ 117              BYTE FlashPage[FLASH_PAGE_SIZE];
+C51 COMPILER V7.06   F34X_USB_ISR                                                          08/25/2012 02:16:55 PAGE 3   
+
+ 118          }   PAGE;
+ 119          
+ 120          xdata   BLOCK   TempStorage[BLOCKS_PR_PAGE];    // Temporary storage of between 
+ 121                                                          // flash writes
+ 122          
+ 123          code    BYTE    Pg0 _at_    0x1400;
+ 124          code    BYTE    Pg1 _at_    0x1600;
+ 125          code    BYTE    Pg2 _at_    0x1800;
+ 126          code    BYTE    Pg3 _at_    0x1A00;
+ 127          code    BYTE    Pg4 _at_    0x1C00;
+ 128          code    BYTE    Pg5 _at_    0x1E00;
+ 129          code    BYTE    Pg6 _at_    0x2000;
+ 130          code    BYTE    Pg7 _at_    0x2200;
+ 131          code    BYTE    Pg8 _at_    0x2400;
+ 132          code    BYTE    Pg9 _at_    0x2600;
+ 133          
+ 134          code    BYTE    Pg10    _at_    0x2800;
+ 135          code    BYTE    Pg11    _at_    0x2A00;
+ 136          code    BYTE    Pg12    _at_    0x2C00;
+ 137          code    BYTE    Pg13    _at_    0x2E00;
+ 138          code    BYTE    Pg14    _at_    0x3000;
+ 139          code    BYTE    Pg15    _at_    0x3200;
+ 140          code    BYTE    Pg16    _at_    0x3400;
+ 141          code    BYTE    Pg17    _at_    0x3600;
+ 142          code    BYTE    Pg18    _at_    0x3800;
+ 143          code    BYTE    Pg19    _at_    0x3A00;
+ 144          
+ 145          idata   BYTE*   PageIndices[20] =   {&Pg0,  &Pg1,   &Pg2,   &Pg3,   &Pg4,   
+ 146                                               &Pg5,  &Pg6,   &Pg7,   &Pg8,   &Pg9,
+ 147                                               &Pg10, &Pg11,  &Pg12,  &Pg13,  &Pg14,  
+ 148                                                                                   &Pg15,  &Pg16,  &Pg17,  &Pg18,  &Pg19};
+ 149          
+ 150          data    UINT    BytesToWrite;   //  Total number of bytes to write to the host
+ 151          data    UINT    BytesToRead;    //  Total number of bytes to read from host
+ 152          data    BYTE    Buffer[3];      //  Buffer for Setup messages
+ 153          data    BYTE    NumBlocks;      //  Number of Blocks for this transfer
+ 154          data    BYTE    M_State;        //  Current Machine State
+ 155          data    BYTE    BlockIndex;     //  Index of Current Block in Page
+ 156          data    BYTE    PageIndex;      //  Index of Current Page in File
+ 157          data    BYTE    BlocksRead;     //  Total Number of Blocks Read
+ 158          data    BYTE    BlocksWrote;    //  Total Number of Blocks Written
+ 159          data    BYTE*   ReadIndex;
+ 160          
+ 161          // code const   BYTE    Serial1[0x0A] = {0x0A,0x03,'A',0,'B',0,'C',0,'D',0};
+ 162          // Serial Number Defintion
+ 163          
+ 164          code    BYTE    LengthFile[3]   _at_    0x1200;
+ 165          //  {Length(Low Byte), Length(High Byte), Number of Blocks}
+ 166          
+ 167          sbit Led1 = P2^2; // LED='1' means ON
+ 168          sbit Led2 = P2^3; // These blink to indicate data transmission
+ 169          
+ 170          //-----------------------------------------------------------------------------
+ 171          // Function Prototypes
+ 172          //-----------------------------------------------------------------------------
+ 173          
+ 174          void    State_Machine(void);        
+ 175          void    Receive_Setup(void);        
+ 176          void    Receive_File(void);        
+ 177          
+ 178          //-----------------------------------------------------------------------------
+ 179          // Interrupt Service Routines
+C51 COMPILER V7.06   F34X_USB_ISR                                                          08/25/2012 02:16:55 PAGE 4   
+
+ 180          //-----------------------------------------------------------------------------
+ 181          
+ 182          //-----------------------------------------------------------------------------
+ 183          // USB_ISR
+ 184          //-----------------------------------------------------------------------------
+ 185          //
+ 186          //
+ 187          // This is the top level USB ISR. All endpoint interrupt/request
+ 188          // handlers are called from this function.
+ 189          //
+ 190          // Handler routines for any configured interrupts should be
+ 191          // added in the appropriate endpoint handler call slots.
+ 192          //
+ 193          //-----------------------------------------------------------------------------
+ 194          void USB_ISR () interrupt 8
+ 195          {
+ 196   1         BYTE bCommonInt, bInInt, bOutInt;
+ 197   1      
+ 198   1         // Read interrupt registers
+ 199   1         UREAD_BYTE(CMINT, bCommonInt);//检测复位信号，读到bCommonInt中
+ 200   1         UREAD_BYTE(IN1INT, bInInt);
+ 201   1         UREAD_BYTE(OUT1INT, bOutInt);
+ 202   1      
+ 203   1         // Check for reset interrupt
+ 204   1         if (bCommonInt & rbRSTINT) //如果有复位信号
+ 205   1         {
+ 206   2            // Call reset handler
+ 207   2           USBReset();
+ 208   2            M_State = ST_WAIT_DEV;
+ 209   2         }
+ 210   1      
+ 211   1         // Check for Endpoint0 interrupt
+ 212   1         if (bInInt & rbEP0)  //如果端点0中断
+ 213   1         {
+ 214   2            // Call Endpoint0 handler
+ 215   2            Endpoint0();
+ 216   2         }
+ 217   1      
+ 218   1         // Endpoint1 IN
+ 219   1         if (bInInt & rbIN1) //如果IN端点1中断
+ 220   1         {
+ 221   2               if (M_State == ST_RX_FILE)    // Ack Transmit complete, go to RX state
+ 222   2               {
+ 223   3                 M_State = (ST_TX_ACK);
+ 224   3               }
+ 225   2               if (M_State == ST_TX_FILE)    // File block transmit complete, 
+ 226   2                                                     // go to TX state
+ 227   2               {
+ 228   3                 // Go to Idle when done
+ 229   3                 M_State = (BlocksWrote == NumBlocks) ? ST_IDLE_DEV : ST_TX_FILE;      
+ 230   3               }
+ 231   2         }
+ 232   1      
+ 233   1         // Endpoint2 OUT
+ 234   1         if (bOutInt & rbOUT2)        //如果OUT端点2中断
+ 235   1         {
+ 236   2            // Call Endpoint2 OUT handler
+ 237   2            BulkOrInterruptOut(&gEp2OutStatus);
+ 238   2      
+ 239   2            M_State = (M_State == ST_IDLE_DEV) ? ST_RX_SETUP : ST_RX_FILE;
+ 240   2         }
+ 241   1      
+C51 COMPILER V7.06   F34X_USB_ISR                                                          08/25/2012 02:16:55 PAGE 5   
+
+ 242   1         State_Machine();
+ 243   1      }
+ 244          
+ 245          //-----------------------------------------------------------------------------
+ 246          // Support Subroutines
+ 247          //-----------------------------------------------------------------------------
+ 248          
+ 249          //-----------------------------------------------------------------------------
+ 250          // Endpoint0
+ 251          //-----------------------------------------------------------------------------
+ 252          //
+ 253          // Return Value : None
+ 254          // Parameters   : None
+ 255          //
+ 256          //-----------------------------------------------------------------------------
+ 257          void Endpoint0 ()
+ 258          {
+ 259   1         BYTE bTemp = 0;
+ 260   1         BYTE bCsr1, uTxBytes;
+ 261   1      
+ 262   1         UWRITE_BYTE(INDEX, 0);                 // Target ep0
+ 263   1         UREAD_BYTE(E0CSR, bCsr1);
+ 264   1      
+ 265   1         // Handle Setup End
+ 266   1         if (bCsr1 & rbSUEND)                   // Check for setup end        
+ 267   1         {                                      // Indicate setup end serviced
+ 268   2            UWRITE_BYTE(E0CSR, rbSSUEND);             //软件应在处理完 SETUP 结束事件（SUEND）后将该位置‘1’
+ 269   2            gEp0Status.bEpState = EP_IDLE;      // ep0 state to idle
+ 270   2            M_State = ST_IDLE_DEV;              // ported from usb_file.c
+ 271   2         }
+ 272   1      
+ 273   1         // Handle sent stall
+ 274   1         if (bCsr1 & rbSTSTL)                   // If last state requested a stall
+ 275   1         {                                      // Clear Sent Stall bit (STSTL)
+ 276   2            UWRITE_BYTE(E0CSR, 0);            //必须软件清零
+ 277   2            gEp0Status.bEpState = EP_IDLE;      // ep0 state to idle
+ 278   2            M_State = ST_IDLE_DEV;              // ported from usb_file.c
+ 279   2         }
+ 280   1      
+ 281   1         // Handle incoming packet
+ 282   1         if (bCsr1 & rbOPRDY)
+ 283   1         {
+ 284   2            // Read the 8-byte command from Endpoint0 FIFO
+ 285   2            FIFORead(0, 8, (BYTE*)&gEp0Command);
+ 286   2      
+ 287   2            // Byte-swap the wIndex field
+ 288   2            bTemp = gEp0Command.wIndex.c[1];
+ 289   2            gEp0Command.wIndex.c[1] = gEp0Command.wIndex.c[0];
+ 290   2            gEp0Command.wIndex.c[0] = bTemp;
+ 291   2      
+ 292   2            // Byte-swap the wValue field
+ 293   2            bTemp = gEp0Command.wValue.c[1];
+ 294   2            gEp0Command.wValue.c[1] = gEp0Command.wValue.c[0];
+ 295   2            gEp0Command.wValue.c[0] = bTemp;
+ 296   2      
+ 297   2            // Byte-swap the wLength field
+ 298   2            bTemp = gEp0Command.wLength.c[1];
+ 299   2            gEp0Command.wLength.c[1] = gEp0Command.wLength.c[0];
+ 300   2            gEp0Command.wLength.c[0] = bTemp;
+ 301   2      
+ 302   2            // Decode received command
+ 303   2            switch (gEp0Command.bmRequestType & CMD_MASK_COMMON)
+C51 COMPILER V7.06   F34X_USB_ISR                                                          08/25/2012 02:16:55 PAGE 6   
+
+ 304   2            {
+ 305   3               case  CMD_STD_DEV_OUT:           // Standard device requests
+ 306   3                  // Decode standard OUT request
+ 307   3                  switch (gEp0Command.bRequest)
+ 308   3                  {
+ 309   4                     case SET_ADDRESS:
+ 310   4                        SetAddressRequest();
+ 311   4                        break;
+ 312   4                     case SET_FEATURE:
+ 313   4                        SetFeatureRequest();
+ 314   4                        break;
+ 315   4                     case CLEAR_FEATURE:
+ 316   4                        ClearFeatureRequest();
+ 317   4                        break;
+ 318   4                     case SET_CONFIGURATION:
+ 319   4                        SetConfigurationRequest();
+ 320   4                        break;
+ 321   4                     case SET_INTERFACE:
+ 322   4                        SetInterfaceRequest();
+ 323   4                        break;
+ 324   4                     // All other OUT requests not supported
+ 325   4                     case SET_DESCRIPTOR:
+ 326   4                     default:
+ 327   4                        gEp0Status.bEpState = EP_ERROR;
+ 328   4                        break;
+ 329   4                  }
+ 330   3                  break;
+ 331   3      
+ 332   3               // Decode standard IN request
+ 333   3               case CMD_STD_DEV_IN:
+ 334   3                  switch (gEp0Command.bRequest)
+ 335   3                  {
+ 336   4                     case GET_STATUS:
+ 337   4                        GetStatusRequest();
+ 338   4                        break;
+ 339   4                     case GET_DESCRIPTOR:
+ 340   4                        GetDescriptorRequest();
+ 341   4                        break;
+ 342   4                     case GET_CONFIGURATION:
+ 343   4                        GetConfigurationRequest();
+ 344   4                        break;
+ 345   4                     case GET_INTERFACE:
+ 346   4                        GetInterfaceRequest();
+ 347   4                        break;
+ 348   4                     // All other IN requests not supported
+ 349   4                     case SYNCH_FRAME:
+ 350   4                     default:
+ 351   4                        gEp0Status.bEpState = EP_ERROR;
+ 352   4                        break;
+ 353   4                  }
+ 354   3                  break;
+ 355   3               // All other requests not supported
+ 356   3               default:
+ 357   3                  gEp0Status.bEpState = EP_ERROR;
+ 358   3            }
+ 359   2      
+ 360   2            // Write E0CSR according to the result of the serviced out packet
+ 361   2            bTemp = rbSOPRDY;
+ 362   2            if (gEp0Status.bEpState == EP_ERROR)
+ 363   2            {
+ 364   3               bTemp |= rbSDSTL;                // Error condition handled
+ 365   3                                                // with STALL
+C51 COMPILER V7.06   F34X_USB_ISR                                                          08/25/2012 02:16:55 PAGE 7   
+
+ 366   3               gEp0Status.bEpState = EP_IDLE;   // Reset state to idle
+ 367   3            }
+ 368   2      
+ 369   2            UWRITE_BYTE(E0CSR, bTemp);
+ 370   2         }
+ 371   1      
+ 372   1         bTemp = 0;                             // Reset temporary variable
+ 373   1      
+ 374   1         // If state is transmit, call transmit routine
+ 375   1         if (gEp0Status.bEpState == EP_TX)
+ 376   1         {
+ 377   2            // Check the number of bytes ready for transmit
+ 378   2            // If less than the maximum packet size, packet will
+ 379   2            // not be of the maximum size
+ 380   2            if (gEp0Status.uNumBytes <= EP0_MAXP)
+ 381   2            {
+ 382   3               uTxBytes = gEp0Status.uNumBytes;
+ 383   3               gEp0Status.uNumBytes = 0;        // update byte counter
+ 384   3               bTemp |= rbDATAEND;              // This will be the last
+ 385   3                                                // packet for this transfer
+ 386   3               gEp0Status.bEpState = EP_IDLE;   // Reset endpoint state
+ 387   3            }
+ 388   2      
+ 389   2            // Otherwise, transmit maximum-length packet
+ 390   2            else
+ 391   2            {
+ 392   3               uTxBytes = EP0_MAXP;
+ 393   3               gEp0Status.uNumBytes -= EP0_MAXP;// update byte counter
+ 394   3            }
+ 395   2      
+ 396   2            // Load FIFO
+ 397   2            FIFOWrite(0, uTxBytes, (BYTE*)gEp0Status.pData);
+ 398   2      
+ 399   2            // Update data pointer
+ 400   2            gEp0Status.pData = (BYTE*)gEp0Status.pData + uTxBytes;
+ 401   2      
+ 402   2            // Update Endpoint0 Control/Status register
+ 403   2            bTemp |= rbINPRDY;                  // Always transmit a packet
+ 404   2                                                // when this routine is called
+ 405   2                                                // (may be zero-length)
+ 406   2      
+ 407   2            UWRITE_BYTE(E0CSR, bTemp);          // Write to Endpoint0 Control/Status
+ 408   2         }
+ 409   1      
+ 410   1      }
+ 411          
+ 412          //-----------------------------------------------------------------------------
+ 413          // BulkOrInterruptOut
+ 414          //-----------------------------------------------------------------------------
+ 415          //
+ 416          // Return Value : None
+ 417          // Parameters   :
+ 418          // 1) PEP_STATUS pEpOutStatus
+ 419          //
+ 420          //-----------------------------------------------------------------------------
+ 421          void BulkOrInterruptOut(PEP_STATUS pEpOutStatus)
+ 422          {
+ 423   1         UINT uBytes;
+ 424   1         BYTE bTemp = 0;
+ 425   1         BYTE bCsrL, bCsrH;
+ 426   1      
+ 427   1         UWRITE_BYTE(INDEX, pEpOutStatus->bEp); // Index to current endpoint
+C51 COMPILER V7.06   F34X_USB_ISR                                                          08/25/2012 02:16:55 PAGE 8   
+
+ 428   1         UREAD_BYTE(EOUTCSRL, bCsrL);
+ 429   1         UREAD_BYTE(EOUTCSRH, bCsrH);
+ 430   1      
+ 431   1         // Make sure this endpoint is not halted
+ 432   1         if (pEpOutStatus->bEpState != EP_HALTED)
+ 433   1         {
+ 434   2            // Handle STALL condition sent
+ 435   2            if (bCsrL & rbOutSTSTL)
+ 436   2            {
+ 437   3               // Clear Send Stall, Sent Stall, and data toggle
+ 438   3               UWRITE_BYTE(EOUTCSRL, rbOutCLRDT);
+ 439   3            }
+ 440   2      
+ 441   2            // Read received packet
+ 442   2            if(bCsrL & rbOutOPRDY)
+ 443   2            {
+ 444   3               // Get packet length
+ 445   3               UREAD_BYTE(EOUTCNTL, bTemp);     // Low byte
+ 446   3               uBytes = (UINT)bTemp & 0x00FF;
+ 447   3      
+ 448   3               UREAD_BYTE(EOUTCNTH, bTemp);     // High byte
+ 449   3               uBytes |= (UINT)bTemp << 8;
+ 450   3      
+ 451   3               if (M_State == ST_IDLE_DEV) 
+ 452   3               {
+ 453   4                  FIFORead(0x02, uBytes, &Buffer);
+ 454   4               }                       
+ 455   3               else
+ 456   3               {
+ 457   4                  FIFORead(0x02, uBytes, (BYTE*)(&TempStorage[BlockIndex]));
+ 458   4               }
+ 459   3      
+ 460   3               // Clear out-packet-ready
+ 461   3               UWRITE_BYTE(INDEX, pEpOutStatus->bEp);
+ 462   3               UWRITE_BYTE(EOUTCSRL, 0);
+ 463   3      
+ 464   3               // Read updated status register
+ 465   3               //UWRITE_BYTE(INDEX, pEpOutStatus->bEp); // Index to current endpoint
+ 466   3               //UREAD_BYTE(EOUTCSRL, bCsrL);
+ 467   3            }
+ 468   2         }
+ 469   1      }
+ 470          
+ 471          //-----------------------------------------------------------------------------
+ 472          // BulkOrInterruptIn
+ 473          //-----------------------------------------------------------------------------
+ 474          //
+ 475          // Return Value : None
+ 476          // Parameters   :
+ 477          // 1) PEP_STATUS pEpOutStatus
+ 478          // 2) BYTE * DataToWrite
+ 479          // 3) UINT NumBytes
+ 480          //
+ 481          // - Places DataToWrite on the IN FIFO
+ 482          // - Sets Packet Ready Bit
+ 483          //-----------------------------------------------------------------------------
+ 484          void BulkOrInterruptIn (PEP_STATUS pEpInStatus, BYTE * DataToWrite,
+ 485                                  UINT NumBytes)
+ 486          {
+ 487   1         BYTE bCsrL, bCsrH;
+ 488   1      
+ 489   1         UWRITE_BYTE(INDEX, pEpInStatus->bEp);  // Index to current endpoint
+C51 COMPILER V7.06   F34X_USB_ISR                                                          08/25/2012 02:16:55 PAGE 9   
+
+ 490   1         UREAD_BYTE(EINCSRL, bCsrL);
+ 491   1         UREAD_BYTE(EINCSRH, bCsrH);
+ 492   1      
+ 493   1         // Make sure this endpoint is not halted
+ 494   1         if (pEpInStatus->bEpState != EP_HALTED)
+ 495   1         {
+ 496   2            // Handle STALL condition sent
+ 497   2            if (bCsrL & rbInSTSTL)
+ 498   2            {
+ 499   3               UWRITE_BYTE(EINCSRL, rbInCLRDT); // Clear Send Stall and Sent Stall,
+ 500   3                                                // and clear data toggle
+ 501   3            }
+ 502   2      
+ 503   2            // If a FIFO slot is open, write a new packet to the IN FIFO
+ 504   2            if (!(bCsrL & rbInINPRDY))
+ 505   2            {
+ 506   3               pEpInStatus->uNumBytes = NumBytes;
+ 507   3               pEpInStatus->pData = (BYTE*)DataToWrite;
+ 508   3      
+ 509   3               // Write <uNumBytes> bytes to the <bEp> FIFO
+ 510   3               FIFOWrite(pEpInStatus->bEp, pEpInStatus->uNumBytes,
+ 511   3                  (BYTE*)pEpInStatus->pData);
+ 512   3      
+ 513   3               BytesToWrite -= NumBytes;
+ 514   3               ReadIndex += NumBytes;
+ 515   3               BlocksWrote++;
+ 516   3      
+ 517   3               // Set Packet Ready bit (INPRDY)
+ 518   3               UWRITE_BYTE(EINCSRL, rbInINPRDY);
+ 519   3      
+ 520   3               // Check updated endopint status
+ 521   3               //UREAD_BYTE(EINCSRL, bCsrL);
+ 522   3      
+ 523   3            }
+ 524   2         }
+ 525   1      }
+ 526          
+ 527          
+ 528          //-----------------------------------------------------------------------------
+ 529          // USBReset
+ 530          //-----------------------------------------------------------------------------
+ 531          //
+ 532          // Return Value : None
+ 533          // Parameters   : None
+ 534          //
+ 535          // - Initialize the global Device Status structure (all zeros)
+ 536          // - Resets all endpoints
+ 537          //-----------------------------------------------------------------------------
+ 538          void USBReset ()
+ 539          {
+ 540   1         BYTE i, bPower = 0;
+ 541   1         BYTE * pDevStatus;
+ 542   1      
+ 543   1        // Reset device status structure to all zeros (undefined)
+ 544   1         pDevStatus = (BYTE *)&gDeviceStatus;
+ 545   1         for (i=0;i<sizeof(DEVICE_STATUS);i++)
+ 546   1         {
+ 547   2            *pDevStatus++ = 0x00;
+ 548   2         }
+ 549   1      
+ 550   1         // Set device state to default
+ 551   1         gDeviceStatus.bDevState = DEV_DEFAULT;
+C51 COMPILER V7.06   F34X_USB_ISR                                                          08/25/2012 02:16:55 PAGE 10  
+
+ 552   1      
+ 553   1         // REMOTE_WAKEUP_SUPPORT and SELF_POWERED_SUPPORT
+ 554   1         // defined in file "usb_desc.h"
+ 555   1         gDeviceStatus.bRemoteWakeupSupport = REMOTE_WAKEUP_SUPPORT;
+ 556   1         gDeviceStatus.bSelfPoweredStatus = SELF_POWERED_SUPPORT;
+ 557   1      
+ 558   1         // Reset all endpoints
+ 559   1      
+ 560   1         // Reset Endpoint0
+ 561   1         gEp0Status.bEpState = EP_IDLE;         // Reset Endpoint0 state
+ 562   1         gEp0Status.bEp = 0;                    // Set endpoint number
+ 563   1         gEp0Status.uMaxP = EP0_MAXP;           // Set maximum packet size
+ 564   1      
+ 565   1         // Reset Endpoint1 IN
+ 566   1         gEp1InStatus.bEpState = EP_HALTED;     // Reset state
+ 567   1         gEp1InStatus.uNumBytes = 0;            // Reset byte counter
+ 568   1      
+ 569   1         // Reset Endpoint2 OUT
+ 570   1         gEp2OutStatus.bEpState = EP_HALTED;    // Reset state
+ 571   1         gEp2OutStatus.uNumBytes = 0;           // Reset byte counter
+ 572   1      
+ 573   1         // Get Suspend enable/disable status. If enabled, prepare temporary
+ 574   1         // variable bPower.
+ 575   1         if (SUSPEND_ENABLE)
+ 576   1         {
+ 577   2            bPower = 0x01;                      // Set bit0 (Suspend Enable)
+ 578   2         }
+ 579   1      
+ 580   1         // Get ISO Update enable/disable status. If enabled, prepare temporary
+ 581   1         // variable bPower.
+ 582   1         if (ISO_UPDATE_ENABLE)
+ 583   1         {
+ 584   2            bPower |= 0x80;                     // Set bit7 (ISO Update Enable)
+ 585   2         }
+ 586   1      
+ 587   1         UWRITE_BYTE(POWER, bPower);
+ 588   1      }
+ 589          
+ 590          
+ 591          //-----------------------------------------------------------------------------
+ 592          // Page_Erase
+ 593          //-----------------------------------------------------------------------------
+ 594          //
+ 595          // Return Value : None
+ 596          // Parameters   :
+ 597          // 1) BYTE* Page_Address
+ 598          //
+ 599          // Erases the page of FLASH located at Page_Address
+ 600          //-----------------------------------------------------------------------------
+ 601          void Page_Erase (BYTE* Page_Address)  small
+ 602          {
+ 603   1         BYTE EA_Save;                        // Used to save state of global
+ 604   1                                              // interrupt enable
+ 605   1         BYTE xdata *pwrite;                  // xdata pointer used to generate movx
+ 606   1      
+ 607   1         EA_Save = EA;                        // Save current EA
+ 608   1         EA = 0;                              // Turn off interrupts
+ 609   1         pwrite = (BYTE xdata *)(Page_Address); // Set write pointer to Page_Address
+ 610   1         PSCTL =  0x03;                       // Enable flash erase and writes
+ 611   1      
+ 612   1         FLKEY =  0xA5;                       // Write flash key sequence to FLKEY
+ 613   1         FLKEY =  0xF1;
+C51 COMPILER V7.06   F34X_USB_ISR                                                          08/25/2012 02:16:55 PAGE 11  
+
+ 614   1         *pwrite = 0x00;                      // Erase flash page using a
+ 615   1                                              // write command
+ 616   1      
+ 617   1         PSCTL = 0x00;                        // Disable flash erase and writes
+ 618   1         EA = EA_Save;                        // Restore state of EA
+ 619   1      }
+ 620          
+ 621          //-----------------------------------------------------------------------------
+ 622          // USBReset
+ 623          //-----------------------------------------------------------------------------
+ 624          //
+ 625          // Return Value : None
+ 626          // Parameters   :
+ 627          // 1) BYTE* PageAddress
+ 628          //
+ 629          // Writes data to the page of FLASH located at PageAddress
+ 630          //-----------------------------------------------------------------------------
+ 631          void Page_Write (BYTE* PageAddress)  small
+ 632          {
+ 633   1         BYTE EA_Save;                           // Used to save state of global
+ 634   1                                                 // interrupt enable
+ 635   1         BYTE xdata *pwrite;                     // Write Pointer
+ 636   1         BYTE xdata *pread;                      // Read Pointer
+ 637   1         UINT x;                                 // Counter for 0-512 bytes
+ 638   1      
+ 639   1         pread = (BYTE xdata *)(TempStorage);
+ 640   1         EA_Save = EA;                           // Save EA
+ 641   1         EA = 0;                                 // Turn off interrupts
+ 642   1         pwrite = (BYTE xdata *)(PageAddress);
+ 643   1         PSCTL = 0x01;                           // Enable flash writes
+ 644   1         for(x = 0; x<FLASH_PAGE_SIZE; x++)      // Write 512 bytes
+ 645   1         {
+ 646   2            FLKEY = 0xA5;                        // Write flash key sequence
+ 647   2            FLKEY = 0xF1;
+ 648   2            *pwrite = *pread;                    // Write data byte to flash
+ 649   2      
+ 650   2            pread++;                             // Increment pointers
+ 651   2            pwrite++;
+ 652   2         }
+ 653   1         PSCTL = 0x00;                           // Disable flash writes
+ 654   1         EA = EA_Save;                           // Restore EA
+ 655   1      }
+ 656          
+ 657          //-----------------------------------------------------------------------------
+ 658          // State_Machine
+ 659          //-----------------------------------------------------------------------------
+ 660          //
+ 661          // Return Value : None
+ 662          // Parameters   : None
+ 663          //
+ 664          // Determine new state and act on current state
+ 665          //-----------------------------------------------------------------------------
+ 666          void State_Machine(void)
+ 667          {
+ 668   1         switch (M_State)
+ 669   1         {
+ 670   2      
+ 671   2            case
+ 672   2               ST_WAIT_DEV:                  // Stay in Wait State
+ 673   2               break;
+ 674   2      
+ 675   2            case
+C51 COMPILER V7.06   F34X_USB_ISR                                                          08/25/2012 02:16:55 PAGE 12  
+
+ 676   2               ST_IDLE_DEV:                  // Stay in Idle State
+ 677   2               break;
+ 678   2      
+ 679   2            case ST_RX_SETUP:
+ 680   2               Receive_Setup();              // Decode host Setup Message
+ 681   2               break;
+ 682   2      
+ 683   2            case ST_RX_FILE:
+ 684   2               Receive_File();               // Receive File data from host
+ 685   2               break;
+ 686   2      
+ 687   2            case ST_TX_ACK:
+ 688   2               M_State = ST_RX_FILE;         // Ack complete, continue RX data
+ 689   2               break;
+ 690   2      
+ 691   2            case ST_TX_FILE:                     // Send file data to host
+ 692   2               if(BytesToWrite > MAX_BLOCK_SIZE)
+ 693   2               {
+ 694   3                  BulkOrInterruptIn(&gEp1InStatus, (BYTE*)(ReadIndex),MAX_BLOCK_SIZE);
+ 695   3                  //BytesToWrite -= MAX_BLOCK_SIZE;
+ 696   3                  //ReadIndex += MAX_BLOCK_SIZE;
+ 697   3      
+ 698   3                  //  Try to write a second packet to the fifo here
+ 699   3                  if(BytesToWrite > MAX_BLOCK_SIZE)
+ 700   3                  {
+ 701   4                     BulkOrInterruptIn(&gEp1InStatus, 
+ 702   4                                       (BYTE*)(ReadIndex),MAX_BLOCK_SIZE);
+ 703   4                  }
+ 704   3                  else
+ 705   3                  {
+ 706   4                     BulkOrInterruptIn(&gEp1InStatus, 
+ 707   4                                       (BYTE*)(ReadIndex),BytesToWrite);
+ 708   4                  }
+ 709   3               }
+ 710   2               else
+ 711   2               {
+ 712   3                  BulkOrInterruptIn(&gEp1InStatus, (BYTE*)(ReadIndex),BytesToWrite);
+ 713   3                  //BytesToWrite = 0;
+ 714   3                  //ReadIndex += BytesToWrite;
+ 715   3               }
+ 716   2               //BlocksWrote++;
+ 717   2               if ((BlocksWrote%8) == 0) 
+ 718   2               {
+ 719   3                  Led2 = ~Led2;
+ 720   3               }
+ 721   2               if (BlocksWrote == NumBlocks)
+ 722   2               {
+ 723   3                  Led2 = 0;
+ 724   3               }
+ 725   2               break;
+ 726   2      
+ 727   2            default:
+ 728   2               M_State = ST_ERROR;           // Unknown State, stay in Error State
+ 729   2               break;
+ 730   2         }
+ 731   1      }
+ 732          
+ 733          //-----------------------------------------------------------------------------
+ 734          // Receive_Setup
+ 735          //-----------------------------------------------------------------------------
+ 736          //
+ 737          // Return Value : None
+C51 COMPILER V7.06   F34X_USB_ISR                                                          08/25/2012 02:16:55 PAGE 13  
+
+ 738          // Parameters   : None
+ 739          //
+ 740          // Determines whether a read or write request has been received
+ 741          // Initializes variables for either a read or write operation
+ 742          //
+ 743          //-----------------------------------------------------------------------------
+ 744          
+ 745          void Receive_Setup(void)
+ 746          {
+ 747   1      
+ 748   1         if (Buffer[0] == READ_MSG)          // Check See if Read File Setup
+ 749   1         {
+ 750   2            PageIndex = 0;                   // Reset Index
+ 751   2            NumBlocks = LengthFile[2];       // Read NumBlocks from flash stg
+ 752   2            NumBlocks = (NumBlocks > MAX_NUM_BLOCKS)? MAX_NUM_BLOCKS: NumBlocks;
+ 753   2            Buffer[0] = SIZE_MSG;            // Send host size of transfer message
+ 754   2            Buffer[1] = LengthFile[1];
+ 755   2            Buffer[2] = LengthFile[0];
+ 756   2            BulkOrInterruptIn(&gEp1InStatus, &Buffer, 3);
+ 757   2            M_State = ST_TX_FILE;            // Go to TX data state
+ 758   2            BlocksWrote = 0;
+ 759   2            BytesToWrite = BytesToRead;
+ 760   2            ReadIndex = PageIndices[0];
+ 761   2            Led2 = 1;
+ 762   2         }
+ 763   1         else                                // Otherwise assume Write Setup Packet
+ 764   1         {
+ 765   2            BytesToRead = Buffer[1] + 256*Buffer[2];
+ 766   2            NumBlocks = (BYTE)(BytesToRead/MAX_BLOCK_SIZE);    // Find NumBlocks
+ 767   2      
+ 768   2            if (NumBlocks > MAX_NUM_BLOCKS)  // State Error if transfer too big
+ 769   2            {
+ 770   3               M_State = ST_ERROR;
+ 771   3            }
+ 772   2            else
+ 773   2            {
+ 774   3      
+ 775   3               if (BytesToRead % MAX_BLOCK_SIZE) 
+ 776   3               {
+ 777   4                  NumBlocks++;                // Increment NumBlocks 
+ 778   4                                                          // for last partial block
+ 779   4               }                  
+ 780   3      
+ 781   3               TempStorage[0].Piece[0] = Buffer[2];
+ 782   3               TempStorage[0].Piece[1] = Buffer[1];
+ 783   3               TempStorage[0].Piece[2] = NumBlocks;
+ 784   3      
+ 785   3               // Write Values to Flash
+ 786   3               Page_Erase(LengthFile);    // Store file data to flash
+ 787   3               Page_Write(LengthFile);
+ 788   3      
+ 789   3               PageIndex = 0;             // Reset Index
+ 790   3               BlockIndex = 0;
+ 791   3               BlocksRead = 0;
+ 792   3               Led1 = 1;
+ 793   3               M_State = ST_RX_FILE;      // Go to RX data state
+ 794   3            }
+ 795   2         }
+ 796   1      }
+ 797          
+ 798          //-----------------------------------------------------------------------------
+ 799          // Receive_Setup
+C51 COMPILER V7.06   F34X_USB_ISR                                                          08/25/2012 02:16:55 PAGE 14  
+
+ 800          //-----------------------------------------------------------------------------
+ 801          //
+ 802          // Return Value : None
+ 803          // Parameters   : None
+ 804          //
+ 805          // Increments BlockRead and BlockIndex
+ 806          // After every 8 packets or at the end of the transfer, sends a handshake
+ 807          //   signal to the host (0xFF)
+ 808          // Sets the state of the device
+ 809          //
+ 810          //-----------------------------------------------------------------------------
+ 811          
+ 812          void Receive_File(void)
+ 813          {
+ 814   1         BlocksRead++;       // Increment
+ 815   1         BlockIndex++;
+ 816   1         // If multiple of 8 or last packet, disable interrupts,
+ 817   1         // write page to flash, reset packet index, enable interrupts
+ 818   1         // Send handshake packet 0xFF to host after FLASH write
+ 819   1         if ((BlockIndex == (BLOCKS_PR_PAGE)) || (BlocksRead == NumBlocks))
+ 820   1         {
+ 821   2            Page_Erase((BYTE*)(PageIndices[PageIndex]));
+ 822   2            Page_Write((BYTE*)(PageIndices[PageIndex]));
+ 823   2            PageIndex++;
+ 824   2            Led1 = ~Led1;
+ 825   2            BlockIndex = 0;
+ 826   2            Buffer[0] = 0xFF;
+ 827   2      
+ 828   2            // Place Handshake packet (0xFF) on the OUT FIFO
+ 829   2            BulkOrInterruptIn (&gEp1InStatus, (BYTE*)&Buffer, 1);
+ 830   2         }
+ 831   1      
+ 832   1         // Go to Idle state if last packet has been received
+ 833   1         if (BlocksRead == NumBlocks)
+ 834   1         {
+ 835   2            M_State = ST_IDLE_DEV;
+ 836   2            Led1 = 0;
+ 837   2         }
+ 838   1      }
+ 839          
+ 840          //-----------------------------------------------------------------------------
+ 841          // End Of File
+ 842          //-----------------------------------------------------------------------------
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1483    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =    512    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     16      25
+   IDATA SIZE       =     60    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

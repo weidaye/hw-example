@@ -1,0 +1,2 @@
+"d:\我的文档\桌面\0709\usbxpress\FileTransfer\Device\C8051F34x\USB_MAIN.obj",
+"C:\SiLabs\MCU\USBXpress\USBXpress_API\Device\C8051F34x\USBX_F34X.LIB"  TO "d:\我的文档\桌面\0709\usbxpress\FileTransfer\Device\C8051F34x\FileTransfer" RS(256) PL(68) PW(78) XDATA(?XD?_USB_INIT?USB_API(0x07AF)) 

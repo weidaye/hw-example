@@ -1,0 +1,408 @@
+C51 COMPILER V7.06   F34X_USB_UTILITIES                                                    08/25/2012 02:16:55 PAGE 1   
+
+
+C51 COMPILER V7.06, COMPILATION OF MODULE F34X_USB_UTILITIES
+OBJECT MODULE PLACED IN F34x_USB_Utilities.OBJ
+COMPILER INVOKED BY: c:\Keil\C51\BIN\c51.exe F34x_USB_Utilities.c DB OE BR
+
+stmt level    source
+
+   1          //-----------------------------------------------------------------------------
+   2          // F34x_USB_Utilities.c
+   3          //-----------------------------------------------------------------------------
+   4          // Copyright 2005 Silicon Laboratories, Inc.
+   5          // http://www.silabs.com
+   6          //
+   7          // Program Description:
+   8          //
+   9          // Source file for USB firmware. Includes the following support routines:
+  10          //
+  11          // - HaltEndpoint()
+  12          // - EnableEndpoint()
+  13          // - GetEpStatus()
+  14          // - SetConfiguration()
+  15          // - SetInterface()
+  16          // - FIFOWrite()
+  17          // - FIFORead()
+  18          //
+  19          //
+  20          // How To Test:    See Readme.txt
+  21          //
+  22          //
+  23          // FID:            34X000014
+  24          // Target:         C8051F34x
+  25          // Tool chain:     Keil C51 7.50 / Keil EVAL C51
+  26          //                 Silicon Laboratories IDE version 2.6
+  27          // Command Line:   See Readme.txt
+  28          // Project Name:   F34x_USB_Bulk
+  29          //
+  30          //
+  31          // Release 1.3
+  32          //    -All changes by GP
+  33          //    -21 NOV 2005
+  34          //    -Changed revision number to match project revision
+  35          //     No content changes to this file
+  36          //    -Modified file to fit new formatting guidelines
+  37          //    -Changed file name from usb_utils.c
+  38          //
+  39          //
+  40          // Release 1.2
+  41          //    -Initial Revision (JS)
+  42          //    -XX AUG 2003
+  43          //
+  44          
+  45          //-----------------------------------------------------------------------------
+  46          // Includes
+  47          //-----------------------------------------------------------------------------
+  48          
+  49          #include "c8051F340.h"
+  50          #include "F34x_USB_Registers.h"
+  51          #include "F34x_USB_Structs.h"
+  52          #include "F34x_USB_Main.h"
+  53          #include "F34x_USB_Descriptors.h"
+  54          #include "F34x_USB_Config.h"
+  55          #include "F34x_USB_Request.h"
+C51 COMPILER V7.06   F34X_USB_UTILITIES                                                    08/25/2012 02:16:55 PAGE 2   
+
+  56          
+  57          //-----------------------------------------------------------------------------
+  58          // Extern Global Variables
+  59          //-----------------------------------------------------------------------------
+  60          
+  61          extern DEVICE_STATUS    gDeviceStatus;
+  62          extern code DESCRIPTORS gDescriptorMap;
+  63          extern DEVICE_STATUS    gDeviceStatus;
+  64          extern EP_STATUS        gEp0Status;
+  65          extern EP_STATUS        gEp2OutStatus;
+  66          extern EP_STATUS        gEp1InStatus;
+  67          
+  68          //-----------------------------------------------------------------------------
+  69          // HaltEndpoint
+  70          //-----------------------------------------------------------------------------
+  71          //
+  72          // Return Value : None
+  73          // Parameters   : 
+  74          // 1) UINT uEp
+  75          //
+  76          //-----------------------------------------------------------------------------
+  77          BYTE HaltEndpoint (UINT uEp)
+  78          {
+  79   1         BYTE bReturnState, bIndex;
+  80   1      
+  81   1         // Save current INDEX value and target selected endpoint
+  82   1         UREAD_BYTE (INDEX, bIndex);
+  83   1         UWRITE_BYTE (INDEX, (BYTE)uEp & 0x00EF);
+  84   1      
+  85   1         // Halt selected endpoint and update its status flag
+  86   1         switch (uEp)
+  87   1         {
+  88   2            case EP1_IN:
+  89   2               UWRITE_BYTE (EINCSRL, rbInSDSTL);
+  90   2               gEp1InStatus.bEpState = EP_HALTED;
+  91   2               bReturnState = EP_IDLE;          // Return success flag
+  92   2               break;
+  93   2            case EP2_OUT:
+  94   2               UWRITE_BYTE (EOUTCSRL, rbOutSDSTL);
+  95   2               gEp2OutStatus.bEpState = EP_HALTED;
+  96   2               bReturnState = EP_IDLE;          // Return success flag
+  97   2               break;
+  98   2            default:
+  99   2               bReturnState = EP_ERROR;         // Return error flag
+ 100   2                                                // if endpoint not found
+ 101   2               break;
+ 102   2         }
+ 103   1      
+ 104   1         UWRITE_BYTE (INDEX, bIndex);           // Restore saved INDEX
+ 105   1         return bReturnState;
+ 106   1      }
+ 107          
+ 108          //-----------------------------------------------------------------------------
+ 109          // EnableEndpoint
+ 110          //-----------------------------------------------------------------------------
+ 111          //
+ 112          // Return Value : None
+ 113          // Parameters   : 
+ 114          // 1) UINT uEp
+ 115          //
+ 116          //-----------------------------------------------------------------------------
+ 117          BYTE EnableEndpoint (UINT uEp)
+C51 COMPILER V7.06   F34X_USB_UTILITIES                                                    08/25/2012 02:16:55 PAGE 3   
+
+ 118          {
+ 119   1         BYTE bReturnState, bIndex;
+ 120   1      
+ 121   1         // Save current INDEX value and target selected endpoint
+ 122   1         UREAD_BYTE (INDEX, bIndex);
+ 123   1         UWRITE_BYTE (INDEX, (BYTE)uEp & 0x00EF);
+ 124   1      
+ 125   1         // Flag selected endpoint has HALTED
+ 126   1         switch (uEp)
+ 127   1         {
+ 128   2            case EP1_IN:
+ 129   2               // Disable STALL condition and clear the data toggle
+ 130   2               UWRITE_BYTE (EINCSRL, rbInCLRDT);
+ 131   2               gEp1InStatus.bEpState = EP_IDLE; // Return success
+ 132   2               bReturnState = EP_IDLE;
+ 133   2               break;
+ 134   2            case EP2_OUT:
+ 135   2               // Disable STALL condition and clear the data toggle
+ 136   2               UWRITE_BYTE (EOUTCSRL, rbOutCLRDT);
+ 137   2               gEp2OutStatus.bEpState = EP_IDLE;// Return success
+ 138   2               bReturnState = EP_IDLE;
+ 139   2               break;
+ 140   2            default:
+ 141   2               bReturnState = EP_ERROR;         // Return error
+ 142   2                                                // if no endpoint found
+ 143   2               break;
+ 144   2         }
+ 145   1      
+ 146   1         UWRITE_BYTE (INDEX, bIndex);           // Restore INDEX
+ 147   1      
+ 148   1         return bReturnState;
+ 149   1      }
+ 150          
+ 151          //-----------------------------------------------------------------------------
+ 152          // GetEpStatus
+ 153          //-----------------------------------------------------------------------------
+ 154          //
+ 155          // Return Value : None
+ 156          // Parameters   : 
+ 157          // 1) UINT uEp
+ 158          //
+ 159          //-----------------------------------------------------------------------------
+ 160          BYTE GetEpStatus (UINT uEp)
+ 161          {
+ 162   1         BYTE bReturnState;
+ 163   1      
+ 164   1         // Get selected endpoint status
+ 165   1         switch (uEp)
+ 166   1         {
+ 167   2            case EP1_IN:
+ 168   2               bReturnState = gEp1InStatus.bEpState;
+ 169   2               break;
+ 170   2            case EP2_OUT:
+ 171   2               bReturnState = gEp2OutStatus.bEpState;
+ 172   2               break;
+ 173   2            default:
+ 174   2               bReturnState = EP_ERROR;
+ 175   2               break;
+ 176   2         }
+ 177   1      
+ 178   1         return bReturnState;
+ 179   1      }
+C51 COMPILER V7.06   F34X_USB_UTILITIES                                                    08/25/2012 02:16:55 PAGE 4   
+
+ 180          
+ 181          //-----------------------------------------------------------------------------
+ 182          // SetConfiguration
+ 183          //-----------------------------------------------------------------------------
+ 184          //
+ 185          // Return Value : None
+ 186          // Parameters   : 
+ 187          // 1) BYTE SelectConfig
+ 188          //
+ 189          //-----------------------------------------------------------------------------
+ 190          BYTE SetConfiguration(BYTE SelectConfig)
+ 191          {
+ 192   1         BYTE bReturnState = EP_IDLE;           // Endpoint state return value
+ 193   1      
+ 194   1         PIF_STATUS pIfStatus;                  // Pointer to interface status
+ 195   1                                                // structure
+ 196   1      
+ 197   1         // Store address of selected config desc
+ 198   1         gDeviceStatus.pConfig = &gDescriptorMap.bCfg1;
+ 199   1      
+ 200   1         // Confirm that this configuration descriptor matches the requested
+ 201   1         // configuration value
+ 202   1         if (gDeviceStatus.pConfig[cfg_bConfigurationValue] != SelectConfig)
+ 203   1         {
+ 204   2            bReturnState = EP_ERROR;
+ 205   2         }
+ 206   1      
+ 207   1         else
+ 208   1         {
+ 209   2            // Store number of interfaces for this configuration
+ 210   2            gDeviceStatus.bNumInterf = gDeviceStatus.pConfig[cfg_bNumInterfaces];
+ 211   2      
+ 212   2            // Store total number of interface descriptors for this configuration
+ 213   2            gDeviceStatus.bTotalInterfDsc = MAX_IF;
+ 214   2      
+ 215   2            // Get pointer to the interface status structure
+ 216   2            pIfStatus = (PIF_STATUS)&gDeviceStatus.IfStatus[0];
+ 217   2      
+ 218   2            // Build Interface status structure for Interface0
+ 219   2            pIfStatus->bIfNumber = 0;           // Set interface number
+ 220   2            pIfStatus->bCurrentAlt = 0;         // Select alternate number zero
+ 221   2            pIfStatus->bNumAlts = 0;            // No other alternates
+ 222   2      
+ 223   2            SetInterface(pIfStatus);            // Configure Interface0, Alternate0
+ 224   2      
+ 225   2            gDeviceStatus.bDevState = DEV_CONFIG;// Set device state to configured
+ 226   2            gDeviceStatus.bCurrentConfig = SelectConfig;// Store current config
+ 227   2         }
+ 228   1      
+ 229   1         return bReturnState;
+ 230   1      }
+ 231          
+ 232          //-----------------------------------------------------------------------------
+ 233          // SetInterface
+ 234          //-----------------------------------------------------------------------------
+ 235          //
+ 236          // Return Value : None
+ 237          // Parameters   : 
+ 238          // 1) PIF_STATUS pIfStatus
+ 239          //
+ 240          //-----------------------------------------------------------------------------
+ 241          BYTE SetInterface(PIF_STATUS pIfStatus)
+C51 COMPILER V7.06   F34X_USB_UTILITIES                                                    08/25/2012 02:16:55 PAGE 5   
+
+ 242          {
+ 243   1         BYTE bReturnState = EP_IDLE;
+ 244   1         BYTE bIndex;
+ 245   1      
+ 246   1         // Save current INDEX value
+ 247   1         UREAD_BYTE (INDEX, bIndex);
+ 248   1      
+ 249   1         // Add actions for each possible interface alternate selections
+ 250   1         switch(pIfStatus->bIfNumber)
+ 251   1         {
+ 252   2            // Configure endpoints for interface0
+ 253   2            case 0:
+ 254   2               // Configure Endpoint1 IN
+ 255   2               UWRITE_BYTE(INDEX, 1);           // Index to Endpoint1 registers
+ 256   2      
+ 257   2               // direction = IN ; Double-buffering enabled
+ 258   2               UWRITE_BYTE(EINCSRH, (rbInDIRSEL | rbInDBIEN));      
+ 259   2               gEp1InStatus.uNumBytes = 0;      // Reset byte counter
+ 260   2               gEp1InStatus.uMaxP = EP1_IN_MAXP;// Set maximum packet size
+ 261   2               gEp1InStatus.bEp = EP1_IN;       // Set endpoint address
+ 262   2               gEp1InStatus.bEpState = EP_IDLE; // Set endpoint state
+ 263   2      
+ 264   2               // Endpoint2 OUT
+ 265   2               UWRITE_BYTE(INDEX, 2);           // Index to Endpoint2 registers
+ 266   2               // Double-buffering enabled ; direction = OUT
+ 267   2               UWRITE_BYTE(EOUTCSRH, rbOutDBOEN);      
+ 268   2               gEp2OutStatus.uNumBytes = 0;     // Reset byte counter
+ 269   2               gEp2OutStatus.uMaxP = EP2_OUT_MAXP;// Set maximum packet size
+ 270   2               gEp2OutStatus.bEp = EP2_OUT;     // Set endpoint number
+ 271   2               gEp2OutStatus.bEpState = EP_IDLE;// Set endpoint state
+ 272   2      
+ 273   2               UWRITE_BYTE(INDEX, 0);           // Return to index 0
+ 274   2      
+ 275   2               break;
+ 276   2      
+ 277   2            // Configure endpoints for interface1
+ 278   2            case 1:
+ 279   2      
+ 280   2            // Configure endpoints for interface2
+ 281   2            case 2:
+ 282   2      
+ 283   2            // Default (error)
+ 284   2            default:
+ 285   2               bReturnState = EP_ERROR;
+ 286   2         }
+ 287   1         UWRITE_BYTE (INDEX, bIndex);           // Restore INDEX
+ 288   1      
+ 289   1         return bReturnState;
+ 290   1      }
+ 291          
+ 292          //-----------------------------------------------------------------------------
+ 293          // SetInterface
+ 294          //-----------------------------------------------------------------------------
+ 295          //
+ 296          // Return Value : None
+ 297          // Parameters   : 
+ 298          // 1) BYTE bEp
+ 299          // 2) UINT uNumBytes
+ 300          // 3) BYTE * pData
+ 301          //
+ 302          // Read from the selected endpoint FIFO
+ 303          //
+C51 COMPILER V7.06   F34X_USB_UTILITIES                                                    08/25/2012 02:16:55 PAGE 6   
+
+ 304          //-----------------------------------------------------------------------------
+ 305          void FIFORead (BYTE bEp, UINT uNumBytes, BYTE * pData)
+ 306          {
+ 307   1         BYTE TargetReg;
+ 308   1         UINT i;
+ 309   1      
+ 310   1         // If >0 bytes requested,
+ 311   1         if (uNumBytes)
+ 312   1         {
+ 313   2            TargetReg = FIFO_EP0 + bEp;         // Find address for target
+ 314   2                                                // endpoint FIFO
+ 315   2      
+ 316   2            USB0ADR = (TargetReg & 0x3F);       // Set address (mask out bits7-6)
+ 317   2            USB0ADR |= 0xC0;                    // Set auto-read and initiate
+ 318   2                                                // first read
+ 319   2      
+ 320   2            // Unload <NumBytes> from the selected FIFO
+ 321   2            for(i=0;i<uNumBytes-1;i++)
+ 322   2            {
+ 323   3               while(USB0ADR & 0x80);           // Wait for BUSY->'0' (data ready)
+ 324   3               pData[i] = USB0DAT;              // Copy data byte
+ 325   3            }
+ 326   2      
+ 327   2      
+ 328   2            while(USB0ADR & 0x80);              // Wait for BUSY->'0' (data ready)
+ 329   2            pData[i] = USB0DAT;                 // Copy data byte
+ 330   2            USB0ADR = 0;                        // Clear auto-read
+ 331   2         }
+ 332   1      }
+ 333          
+ 334          //-----------------------------------------------------------------------------
+ 335          // FIFOWrite
+ 336          //-----------------------------------------------------------------------------
+ 337          //
+ 338          // Return Value : None
+ 339          // Parameters   : 
+ 340          // 1) BYTE bEp
+ 341          // 2) UINT uNumBytes
+ 342          // 3) BYTE * pData
+ 343          //
+ 344          // Write to the selected endpoint FIFO
+ 345          //
+ 346          //-----------------------------------------------------------------------------
+ 347          void FIFOWrite (BYTE bEp, UINT uNumBytes, BYTE * pData)
+ 348          {
+ 349   1         BYTE TargetReg;
+ 350   1         UINT i;
+ 351   1      
+ 352   1         // If >0 bytes requested,
+ 353   1         if (uNumBytes)
+ 354   1         {
+ 355   2            TargetReg = FIFO_EP0 + bEp;         // Find address for target
+ 356   2                                                // endpoint FIFO
+ 357   2      
+ 358   2            while(USB0ADR & 0x80);              // Wait for BUSY->'0'
+ 359   2                                                // (register available)
+ 360   2            USB0ADR = (TargetReg & 0x3F);       // Set address (mask out bits7-6)
+ 361   2      
+ 362   2            // Write <NumBytes> to the selected FIFO
+ 363   2            for(i=0;i<uNumBytes;i++)
+ 364   2            {
+ 365   3               USB0DAT = pData[i];
+C51 COMPILER V7.06   F34X_USB_UTILITIES                                                    08/25/2012 02:16:55 PAGE 7   
+
+ 366   3               while(USB0ADR & 0x80);           // Wait for BUSY->'0' (data ready)
+ 367   3            }
+ 368   2         }
+ 369   1      }
+ 370          
+ 371          //-----------------------------------------------------------------------------
+ 372          // End Of File
+ 373          //-----------------------------------------------------------------------------
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    566    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      12
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

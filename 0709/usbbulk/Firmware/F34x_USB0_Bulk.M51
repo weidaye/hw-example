@@ -1,0 +1,1419 @@
+BL51 BANKED LINKER/LOCATER V5.03              08/25/2012  02:16:55  PAGE 1
+
+
+BL51 BANKED LINKER/LOCATER V5.03, INVOKED BY:
+C:\KEIL\C51\BIN\BL51.EXE D:\0709\usbbulk\Firmware\F34x_USB_Descriptors.obj, D:
+>> \0709\usbbulk\Firmware\F34x_USB_Main.obj, D:\0709\usbbulk\Firmware\F34x_USB
+>> _Standard_Requests.obj, D:\0709\usbbulk\Firmware\F34x_USB_Utilities.obj, D:
+>> \0709\usbbulk\Firmware\F34x_USB_ISR.obj TO D:\0709\usbbulk\Firmware\F34x_US
+>> B0_Bulk RS (256) PL (68) PW (78)
+
+
+MEMORY MODEL: SMALL
+
+
+INPUT MODULES INCLUDED:
+  D:\0709\usbbulk\Firmware\F34x_USB_Descriptors.obj (F34X_USB_DESCRIPTORS)
+  D:\0709\usbbulk\Firmware\F34x_USB_Main.obj (F34X_USB_MAIN)
+  D:\0709\usbbulk\Firmware\F34x_USB_Standard_Requests.obj (F34X_USB_STANDARD_R
+>> EQUESTS)
+  D:\0709\usbbulk\Firmware\F34x_USB_Utilities.obj (F34X_USB_UTILITIES)
+  D:\0709\usbbulk\Firmware\F34x_USB_ISR.obj (F34X_USB_ISR)
+  C:\KEIL\C51\LIB\C51S.LIB (?C_STARTUP)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?CLDPTR)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?CLDOPTR)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?CSTPTR)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?CSTOPTR)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?ILDOPTR)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?ISTOPTR)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?PLDOPTR)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?PSTOPTR)
+  C:\KEIL\C51\LIB\C51S.LIB (?C_INIT)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?PLDIDATA)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?PSTIDATA)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?PLDXDATA)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?PSTXDATA)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?PLDPDATA)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?PSTPDATA)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?PLDCODE)
+
+
+LINK MAP OF MODULE:  D:\0709\usbbulk\Firmware\F34x_USB0_Bulk (F34X_USB_DESCRIP
+>> TORS)
+
+
+            TYPE    BASE      LENGTH    RELOCATION   SEGMENT NAME
+            -----------------------------------------------------
+
+            * * * * * * *   D A T A   M E M O R Y   * * * * * * *
+            REG     0000H     0008H     ABSOLUTE     "REG BANK 0"
+            DATA    0008H     0036H     UNIT         ?DT?F34X_USB_MAIN
+            DATA    003EH     0010H     UNIT         ?DT?F34X_USB_ISR
+            DATA    004EH     0010H     UNIT         _DATA_GROUP_
+            DATA    005EH     0006H     UNIT         ?DT?F34X_USB_STANDARD_REQ
+>> UESTS
+            IDATA   0064H     003CH     UNIT         ?ID?F34X_USB_ISR
+            IDATA   00A0H     0001H     UNIT         ?STACK
+
+            * * * * * * *  X D A T A   M E M O R Y  * * * * * * *
+            XDATA   0000H     0200H     UNIT         ?XD?F34X_USB_ISR
+
+            * * * * * * *   C O D E   M E M O R Y   * * * * * * *
+            CODE    0000H     0003H     ABSOLUTE     
+            CODE    0003H     0040H     UNIT         ?C_INITSEG
+            CODE    0043H     0003H     ABSOLUTE     
+            CODE    0046H     01AAH     UNIT         ?C?LIB_CODE
+            CODE    01F0H     0152H     UNIT         ?PR?ENDPOINT0?F34X_USB_IS
+>> R
+            CODE    0342H     00C0H     UNIT         ?PR?_BULKORINTERRUPTIN?F3
+>> 4X_USB_ISR
+BL51 BANKED LINKER/LOCATER V5.03            08/25/2012  02:16:55  PAGE 2
+
+
+            CODE    0402H     00B1H     UNIT         ?PR?_BULKORINTERRUPTOUT?F
+>> 34X_USB_ISR
+            CODE    04B3H     00B1H     UNIT         ?PR?RECEIVE_SETUP?F34X_US
+>> B_ISR
+            CODE    0564H     00A7H     UNIT         ?PR?USB_ISR?F34X_USB_ISR
+            CODE    060BH     0098H     UNIT         ?PR?STATE_MACHINE?F34X_US
+>> B_ISR
+            CODE    06A3H     008CH     UNIT         ?C_C51STARTUP
+            CODE    072FH     0077H     UNIT         ?PR?_SETINTERFACE?F34X_US
+>> B_UTILITIES
+            CODE    07A6H     0076H     UNIT         ?PR?GETSTATUSREQUEST?F34X
+>> _USB_STANDARD_REQUESTS
+            CODE    081CH     0075H     UNIT         ?PR?GETDESCRIPTORREQUEST?
+>> F34X_USB_STANDARD_REQUESTS
+            CODE    0891H     0061H     UNIT         ?PR?_FIFOREAD?F34X_USB_UT
+>> ILITIES
+            CODE    08F2H     005EH     UNIT         ?PR?RECEIVE_FILE?F34X_USB
+>> _ISR
+            CODE    0950H     0056H     UNIT         ?PR?_HALTENDPOINT?F34X_US
+>> B_UTILITIES
+            CODE    09A6H     0055H     UNIT         ?PR?_SETCONFIGURATION?F34
+>> X_USB_UTILITIES
+            CODE    09FBH     0054H     UNIT         ?PR?_ENABLEENDPOINT?F34X_
+>> USB_UTILITIES
+            CODE    0A4FH     004EH     UNIT         ?PR?_PAGE_WRITE?F34X_USB_
+>> ISR
+            CODE    0A9DH     004AH     UNIT         ?PR?USBRESET?F34X_USB_ISR
+>> 
+            CODE    0AE7H     0047H     UNIT         ?PR?GETCONFIGURATIONREQUE
+>> ST?F34X_USB_STANDARD_REQUESTS
+            CODE    0B2EH     0046H     UNIT         ?PR?_FIFOWRITE?F34X_USB_U
+>> TILITIES
+            CODE    0B74H     0043H     UNIT         ?PR?GETINTERFACEREQUEST?F
+>> 34X_USB_STANDARD_REQUESTS
+            CODE    0BB7H     0041H     UNIT         ?PR?USB0_INIT?F34X_USB_MA
+>> IN
+            CODE    0BF8H     003FH     UNIT         ?PR?SETADDRESSREQUEST?F34
+>> X_USB_STANDARD_REQUESTS
+            CODE    0C37H     003AH     UNIT         ?PR?SETFEATUREREQUEST?F34
+>> X_USB_STANDARD_REQUESTS
+            CODE    0C71H     003AH     UNIT         ?PR?CLEARFEATUREREQUEST?F
+>> 34X_USB_STANDARD_REQUESTS
+            CODE    0CABH     0037H     UNIT         ?PR?SETCONFIGURATIONREQUE
+>> ST?F34X_USB_STANDARD_REQUESTS
+            CODE    0CE2H     0032H     UNIT         ?CO?F34X_USB_DESCRIPTORS
+            CODE    0D14H     0022H     UNIT         ?PR?_PAGE_ERASE?F34X_USB_
+>> ISR
+            CODE    0D36H     001DH     UNIT         ?PR?SYSCLK_INIT?F34X_USB_
+>> MAIN
+            CODE    0D53H     0019H     UNIT         ?PR?_GETEPSTATUS?F34X_USB
+>> _UTILITIES
+            CODE    0D6CH     0016H     UNIT         ?PR?MAIN?F34X_USB_MAIN
+            CODE    0D82H     000EH     UNIT         ?PR?PORT_INIT?F34X_USB_MA
+>> IN
+            CODE    0D90H     000CH     UNIT         ?PR?USB0_ENABLE?F34X_USB_
+>> MAIN
+            CODE    0D9CH     0004H     UNIT         ?PR?VDD_MON_INIT?F34X_USB
+>> _MAIN
+            CODE    0DA0H     0001H     UNIT         ?PR?SETINTERFACEREQUEST?F
+>> 34X_USB_STANDARD_REQUESTS
+                    0DA1H     045FH                  *** GAP ***
+            CODE    1200H     0003H     ABSOLUTE     
+                    1203H     01FDH                  *** GAP ***
+            CODE    1400H     0001H     ABSOLUTE     
+                    1401H     01FFH                  *** GAP ***
+BL51 BANKED LINKER/LOCATER V5.03            08/25/2012  02:16:55  PAGE 3
+
+
+            CODE    1600H     0001H     ABSOLUTE     
+                    1601H     01FFH                  *** GAP ***
+            CODE    1800H     0001H     ABSOLUTE     
+                    1801H     01FFH                  *** GAP ***
+            CODE    1A00H     0001H     ABSOLUTE     
+                    1A01H     01FFH                  *** GAP ***
+            CODE    1C00H     0001H     ABSOLUTE     
+                    1C01H     01FFH                  *** GAP ***
+            CODE    1E00H     0001H     ABSOLUTE     
+                    1E01H     01FFH                  *** GAP ***
+            CODE    2000H     0001H     ABSOLUTE     
+                    2001H     01FFH                  *** GAP ***
+            CODE    2200H     0001H     ABSOLUTE     
+                    2201H     01FFH                  *** GAP ***
+            CODE    2400H     0001H     ABSOLUTE     
+                    2401H     01FFH                  *** GAP ***
+            CODE    2600H     0001H     ABSOLUTE     
+                    2601H     01FFH                  *** GAP ***
+            CODE    2800H     0001H     ABSOLUTE     
+                    2801H     01FFH                  *** GAP ***
+            CODE    2A00H     0001H     ABSOLUTE     
+                    2A01H     01FFH                  *** GAP ***
+            CODE    2C00H     0001H     ABSOLUTE     
+                    2C01H     01FFH                  *** GAP ***
+            CODE    2E00H     0001H     ABSOLUTE     
+                    2E01H     01FFH                  *** GAP ***
+            CODE    3000H     0001H     ABSOLUTE     
+                    3001H     01FFH                  *** GAP ***
+            CODE    3200H     0001H     ABSOLUTE     
+                    3201H     01FFH                  *** GAP ***
+            CODE    3400H     0001H     ABSOLUTE     
+                    3401H     01FFH                  *** GAP ***
+            CODE    3600H     0001H     ABSOLUTE     
+                    3601H     01FFH                  *** GAP ***
+            CODE    3800H     0001H     ABSOLUTE     
+                    3801H     01FFH                  *** GAP ***
+            CODE    3A00H     0001H     ABSOLUTE     
+
+
+
+OVERLAY MAP OF MODULE:   D:\0709\usbbulk\Firmware\F34x_USB0_Bulk (F34X_USB_DES
+>> CRIPTORS)
+
+
+SEGMENT                                            DATA_GROUP 
+  +--> CALLED SEGMENT                            START    LENGTH
+----------------------------------------------------------------
+?PR?USB_ISR?F34X_USB_ISR                         004EH    0002H
+  +--> ?PR?USBRESET?F34X_USB_ISR
+  +--> ?PR?ENDPOINT0?F34X_USB_ISR
+  +--> ?PR?_BULKORINTERRUPTOUT?F34X_USB_ISR
+  +--> ?PR?STATE_MACHINE?F34X_USB_ISR
+
+?PR?USBRESET?F34X_USB_ISR                        0050H    0003H
+
+?PR?ENDPOINT0?F34X_USB_ISR                       0050H    0002H
+  +--> ?PR?_FIFOREAD?F34X_USB_UTILITIES
+  +--> ?PR?SETADDRESSREQUEST?F34X_USB_STANDA...
+  +--> ?PR?SETFEATUREREQUEST?F34X_USB_STANDA...
+  +--> ?PR?CLEARFEATUREREQUEST?F34X_USB_STAN...
+  +--> ?PR?SETCONFIGURATIONREQUEST?F34X_USB_...
+  +--> ?PR?SETINTERFACEREQUEST?F34X_USB_STAN...
+  +--> ?PR?GETSTATUSREQUEST?F34X_USB_STANDAR...
+  +--> ?PR?GETDESCRIPTORREQUEST?F34X_USB_STA...
+  +--> ?PR?GETCONFIGURATIONREQUEST?F34X_USB_...
+BL51 BANKED LINKER/LOCATER V5.03            08/25/2012  02:16:55  PAGE 4
+
+
+  +--> ?PR?GETINTERFACEREQUEST?F34X_USB_STAN...
+  +--> ?PR?_FIFOWRITE?F34X_USB_UTILITIES
+
+?PR?_FIFOREAD?F34X_USB_UTILITIES                 0056H    0005H
+
+?PR?SETFEATUREREQUEST?F34X_USB_STANDA...         -----    -----
+  +--> ?PR?_HALTENDPOINT?F34X_USB_UTILITIES
+
+?PR?CLEARFEATUREREQUEST?F34X_USB_STAN...         -----    -----
+  +--> ?PR?_ENABLEENDPOINT?F34X_USB_UTILITIES
+
+?PR?SETCONFIGURATIONREQUEST?F34X_USB_...         -----    -----
+  +--> ?CO?F34X_USB_DESCRIPTORS
+  +--> ?PR?_SETCONFIGURATION?F34X_USB_UTILITIES
+
+?PR?_SETCONFIGURATION?F34X_USB_UTILITIES         0052H    0002H
+  +--> ?CO?F34X_USB_DESCRIPTORS
+  +--> ?PR?_SETINTERFACE?F34X_USB_UTILITIES
+
+?PR?GETSTATUSREQUEST?F34X_USB_STANDAR...         -----    -----
+  +--> ?PR?_GETEPSTATUS?F34X_USB_UTILITIES
+
+?PR?GETDESCRIPTORREQUEST?F34X_USB_STA...         0052H    0002H
+  +--> ?CO?F34X_USB_DESCRIPTORS
+
+?PR?GETCONFIGURATIONREQUEST?F34X_USB_...         -----    -----
+  +--> ?CO?F34X_USB_DESCRIPTORS
+
+?PR?_FIFOWRITE?F34X_USB_UTILITIES                0059H    0005H
+
+?PR?_BULKORINTERRUPTOUT?F34X_USB_ISR             0050H    0006H
+  +--> ?PR?_FIFOREAD?F34X_USB_UTILITIES
+
+?PR?STATE_MACHINE?F34X_USB_ISR                   -----    -----
+  +--> ?PR?RECEIVE_SETUP?F34X_USB_ISR
+  +--> ?PR?RECEIVE_FILE?F34X_USB_ISR
+  +--> ?PR?_BULKORINTERRUPTIN?F34X_USB_ISR
+
+?PR?RECEIVE_SETUP?F34X_USB_ISR                   -----    -----
+  +--> ?PR?_BULKORINTERRUPTIN?F34X_USB_ISR
+  +--> ?PR?_PAGE_ERASE?F34X_USB_ISR
+  +--> ?PR?_PAGE_WRITE?F34X_USB_ISR
+
+?PR?_BULKORINTERRUPTIN?F34X_USB_ISR              0050H    0009H
+  +--> ?PR?_FIFOWRITE?F34X_USB_UTILITIES
+
+?PR?_PAGE_WRITE?F34X_USB_ISR                     0050H    0003H
+
+?PR?RECEIVE_FILE?F34X_USB_ISR                    -----    -----
+  +--> ?PR?_PAGE_ERASE?F34X_USB_ISR
+  +--> ?PR?_PAGE_WRITE?F34X_USB_ISR
+  +--> ?PR?_BULKORINTERRUPTIN?F34X_USB_ISR
+
+*** NEW ROOT ***************************************************
+
+?C_C51STARTUP                                    -----    -----
+  +--> ?PR?MAIN?F34X_USB_MAIN
+  +--> ?C_INITSEG
+
+?PR?MAIN?F34X_USB_MAIN                           -----    -----
+  +--> ?PR?PORT_INIT?F34X_USB_MAIN
+  +--> ?PR?SYSCLK_INIT?F34X_USB_MAIN
+  +--> ?PR?USB0_INIT?F34X_USB_MAIN
+  +--> ?PR?VDD_MON_INIT?F34X_USB_MAIN
+  +--> ?PR?USB0_ENABLE?F34X_USB_MAIN
+BL51 BANKED LINKER/LOCATER V5.03            08/25/2012  02:16:55  PAGE 5
+
+
+
+
+
+SYMBOL TABLE OF MODULE:  D:\0709\usbbulk\Firmware\F34x_USB0_Bulk (F34X_USB_DES
+>> CRIPTORS)
+
+  VALUE           TYPE          NAME
+  ----------------------------------
+
+  -------         MODULE        F34X_USB_DESCRIPTORS
+  C:0000H         SYMBOL        _ICE_DUMMY_
+  C:0CE2H         PUBLIC        gDescriptorMap
+  -------         ENDMOD        F34X_USB_DESCRIPTORS
+
+  -------         MODULE        F34X_USB_MAIN
+  C:0000H         SYMBOL        _ICE_DUMMY_
+  D:00A0H         PUBLIC        P2
+  D:00E6H         PUBLIC        EIE1
+  B:00A8H.7       PUBLIC        EA
+  D:00D7H         PUBLIC        USB0XCN
+  D:00A6H         PUBLIC        P2MDOUT
+  D:0008H         PUBLIC        gEp1InStatus
+  D:0013H         PUBLIC        gEp0Command
+  C:0BB7H         PUBLIC        USB0_Init
+  D:001BH         PUBLIC        gEp2OutStatus
+  D:00D9H         PUBLIC        PCA0MD
+  D:00E1H         PUBLIC        XBR0
+  D:00E2H         PUBLIC        XBR1
+  C:0D9CH         PUBLIC        VDD_MON_Init
+  C:0D6CH         PUBLIC        main
+  C:0D82H         PUBLIC        PORT_Init
+  D:00A9H         PUBLIC        CLKSEL
+  D:00B2H         PUBLIC        OSCICN
+  D:0026H         PUBLIC        gDeviceStatus
+  C:0D90H         PUBLIC        USB0_Enable
+  B:00A0H.2       PUBLIC        Led1
+  B:00A0H.3       PUBLIC        Led2
+  D:00B9H         PUBLIC        CLKMUL
+  C:0D36H         PUBLIC        SYSCLK_Init
+  D:0033H         PUBLIC        gEp0Status
+  D:00EFH         PUBLIC        RSTSRC
+  D:0096H         PUBLIC        USB0ADR
+  D:0097H         PUBLIC        USB0DAT
+  -------         PROC          MAIN
+  C:0D6CH         LINE#         87
+  C:0D6CH         LINE#         88
+  C:0D6CH         LINE#         89
+  C:0D6FH         LINE#         90
+  C:0D72H         LINE#         91
+  C:0D75H         LINE#         92
+  C:0D78H         LINE#         93
+  C:0D7BH         LINE#         96
+  C:0D7DH         LINE#         98
+  C:0D80H         LINE#         100
+  -------         ENDPROC       MAIN
+  -------         PROC          SYSCLK_INIT
+  -------         DO            
+  D:0007H         SYMBOL        delay
+  -------         ENDDO         
+  C:0D36H         LINE#         117
+  C:0D36H         LINE#         118
+  C:0D36H         LINE#         119
+  C:0D38H         LINE#         121
+  C:0D3BH         LINE#         124
+  C:0D3EH         LINE#         127
+BL51 BANKED LINKER/LOCATER V5.03            08/25/2012  02:16:55  PAGE 6
+
+
+  C:0D41H         LINE#         128
+  C:0D47H         LINE#         129
+  C:0D4AH         LINE#         131
+  C:0D4FH         LINE#         133
+  C:0D4FH         LINE#         134
+  C:0D52H         LINE#         135
+  -------         ENDPROC       SYSCLK_INIT
+  -------         PROC          VDD_MON_INIT
+  C:0D9CH         LINE#         147
+  C:0D9CH         LINE#         148
+  C:0D9CH         LINE#         149
+  C:0D9FH         LINE#         150
+  -------         ENDPROC       VDD_MON_INIT
+  -------         PROC          USB0_INIT
+  C:0BB7H         LINE#         165
+  C:0BB7H         LINE#         166
+  C:0BB7H         LINE#         167
+  C:0BC2H         LINE#         169
+  C:0BCDH         LINE#         170
+  C:0BD8H         LINE#         171
+  C:0BE3H         LINE#         173
+  C:0BE6H         LINE#         174
+  C:0BE9H         LINE#         176
+  C:0BF4H         LINE#         179
+  C:0BF7H         LINE#         180
+  -------         ENDPROC       USB0_INIT
+  -------         PROC          USB0_ENABLE
+  C:0D90H         LINE#         192
+  C:0D90H         LINE#         193
+  C:0D90H         LINE#         195
+  C:0D9BH         LINE#         198
+  -------         ENDPROC       USB0_ENABLE
+  -------         PROC          PORT_INIT
+  C:0D82H         LINE#         213
+  C:0D82H         LINE#         214
+  C:0D82H         LINE#         215
+  C:0D85H         LINE#         216
+  C:0D87H         LINE#         217
+  C:0D89H         LINE#         218
+  C:0D8CH         LINE#         219
+  C:0D8FH         LINE#         220
+  -------         ENDPROC       PORT_INIT
+  -------         ENDMOD        F34X_USB_MAIN
+
+  -------         MODULE        F34X_USB_STANDARD_REQUESTS
+  C:0000H         SYMBOL        _ICE_DUMMY_
+  C:0CABH         PUBLIC        SetConfigurationRequest
+  C:07A6H         PUBLIC        GetStatusRequest
+  D:005EH         PUBLIC        bEpState
+  C:0B74H         PUBLIC        GetInterfaceRequest
+  D:005FH         PUBLIC        pIfStatus
+  C:0C71H         PUBLIC        ClearFeatureRequest
+  D:0062H         PUBLIC        uNumBytes
+  C:0DA0H         PUBLIC        SetInterfaceRequest
+  C:081CH         PUBLIC        GetDescriptorRequest
+  C:0BF8H         PUBLIC        SetAddressRequest
+  C:0C37H         PUBLIC        SetFeatureRequest
+  C:0AE7H         PUBLIC        GetConfigurationRequest
+  D:0096H         PUBLIC        USB0ADR
+  D:0097H         PUBLIC        USB0DAT
+  -------         PROC          SETADDRESSREQUEST
+  C:0BF8H         LINE#         99
+  C:0BF8H         LINE#         100
+  C:0BF8H         LINE#         103
+  C:0C09H         LINE#         105
+BL51 BANKED LINKER/LOCATER V5.03            08/25/2012  02:16:55  PAGE 7
+
+
+  C:0C09H         LINE#         106
+  C:0C0CH         LINE#         107
+  C:0C0EH         LINE#         110
+  C:0C0EH         LINE#         112
+  C:0C19H         LINE#         113
+  C:0C21H         LINE#         115
+  C:0C21H         LINE#         116
+  C:0C24H         LINE#         117
+  C:0C24H         LINE#         118
+  C:0C2DH         LINE#         120
+  C:0C2DH         LINE#         121
+  C:0C30H         LINE#         122
+  C:0C30H         LINE#         123
+  C:0C33H         LINE#         124
+  C:0C33H         LINE#         125
+  C:0C36H         LINE#         126
+  -------         ENDPROC       SETADDRESSREQUEST
+  -------         PROC          SETFEATUREREQUEST
+  C:0C37H         LINE#         136
+  C:0C37H         LINE#         137
+  C:0C37H         LINE#         141
+  C:0C4AH         LINE#         144
+  C:0C4AH         LINE#         145
+  C:0C4DH         LINE#         146
+  C:0C4DH         LINE#         149
+  C:0C57H         LINE#         150
+  C:0C57H         LINE#         152
+  C:0C57H         LINE#         153
+  C:0C57H         LINE#         154
+  C:0C59H         LINE#         157
+  C:0C59H         LINE#         158
+  C:0C5FH         LINE#         159
+  C:0C5FH         LINE#         160
+  C:0C68H         LINE#         161
+  C:0C6AH         LINE#         162
+  C:0C6AH         LINE#         164
+  C:0C6AH         LINE#         165
+  C:0C6AH         LINE#         166
+  C:0C6AH         LINE#         167
+  C:0C6AH         LINE#         168
+  C:0C6DH         LINE#         170
+  C:0C6DH         LINE#         171
+  C:0C6DH         LINE#         172
+  C:0C70H         LINE#         173
+  -------         ENDPROC       SETFEATUREREQUEST
+  -------         PROC          CLEARFEATUREREQUEST
+  C:0C71H         LINE#         183
+  C:0C71H         LINE#         184
+  C:0C71H         LINE#         188
+  C:0C84H         LINE#         190
+  C:0C84H         LINE#         191
+  C:0C87H         LINE#         192
+  C:0C87H         LINE#         195
+  C:0C91H         LINE#         196
+  C:0C91H         LINE#         198
+  C:0C91H         LINE#         200
+  C:0C91H         LINE#         201
+  C:0C93H         LINE#         204
+  C:0C93H         LINE#         205
+  C:0C99H         LINE#         206
+  C:0C99H         LINE#         208
+  C:0CA2H         LINE#         209
+  C:0CA4H         LINE#         210
+  C:0CA4H         LINE#         212
+  C:0CA4H         LINE#         213
+BL51 BANKED LINKER/LOCATER V5.03            08/25/2012  02:16:55  PAGE 8
+
+
+  C:0CA4H         LINE#         214
+  C:0CA4H         LINE#         215
+  C:0CA4H         LINE#         216
+  C:0CA7H         LINE#         218
+  C:0CA7H         LINE#         219
+  C:0CA7H         LINE#         220
+  C:0CAAH         LINE#         221
+  -------         ENDPROC       CLEARFEATUREREQUEST
+  -------         PROC          SETCONFIGURATIONREQUEST
+  C:0CABH         LINE#         231
+  C:0CABH         LINE#         232
+  C:0CABH         LINE#         235
+  C:0CBBH         LINE#         237
+  C:0CBBH         LINE#         238
+  C:0CBBH         LINE#         239
+  C:0CBDH         LINE#         242
+  C:0CBDH         LINE#         244
+  C:0CC9H         LINE#         246
+  C:0CC9H         LINE#         247
+  C:0CCCH         LINE#         248
+  C:0CCEH         LINE#         251
+  C:0CD2H         LINE#         252
+  C:0CD7H         LINE#         256
+  C:0CDEH         LINE#         257
+  C:0CDEH         LINE#         258
+  C:0CE1H         LINE#         259
+  -------         ENDPROC       SETCONFIGURATIONREQUEST
+  -------         PROC          SETINTERFACEREQUEST
+  C:0DA0H         LINE#         270
+  C:0DA0H         LINE#         271
+  C:0DA0H         LINE#         302
+  -------         ENDPROC       SETINTERFACEREQUEST
+  -------         PROC          GETSTATUSREQUEST
+  C:07A6H         LINE#         312
+  C:07A6H         LINE#         313
+  C:07A6H         LINE#         315
+  C:07C1H         LINE#         318
+  C:07C1H         LINE#         319
+  C:07C4H         LINE#         320
+  C:07C6H         LINE#         323
+  C:07C6H         LINE#         325
+  C:07D4H         LINE#         326
+  C:07D4H         LINE#         328
+  C:07D4H         LINE#         330
+  C:07DAH         LINE#         331
+  C:07DCH         LINE#         333
+  C:07DCH         LINE#         335
+  C:07DFH         LINE#         336
+  C:07E2H         LINE#         337
+  C:07E6H         LINE#         338
+  C:07E6H         LINE#         339
+  C:07E8H         LINE#         342
+  C:07E8H         LINE#         344
+  C:07EDH         LINE#         345
+  C:07EFH         LINE#         348
+  C:07EFH         LINE#         350
+  C:07F4H         LINE#         351
+  C:07FEH         LINE#         352
+  C:0801H         LINE#         353
+  C:0803H         LINE#         356
+  C:0803H         LINE#         357
+  C:0806H         LINE#         358
+  C:0806H         LINE#         359
+  C:0806H         LINE#         362
+  C:0809H         LINE#         365
+BL51 BANKED LINKER/LOCATER V5.03            08/25/2012  02:16:55  PAGE 9
+
+
+  C:0812H         LINE#         366
+  C:0818H         LINE#         367
+  C:0818H         LINE#         368
+  C:081BH         LINE#         369
+  -------         ENDPROC       GETSTATUSREQUEST
+  -------         PROC          GETDESCRIPTORREQUEST
+  -------         DO            
+  D:0052H         SYMBOL        wTempInt
+  -------         ENDDO         
+  C:081CH         LINE#         379
+  C:081CH         LINE#         380
+  C:081CH         LINE#         385
+  C:0825H         LINE#         386
+  C:0825H         LINE#         388
+  C:0825H         LINE#         390
+  C:082BH         LINE#         392
+  C:0836H         LINE#         393
+  C:0836H         LINE#         394
+  C:083CH         LINE#         395
+  C:083CH         LINE#         397
+  C:0845H         LINE#         398
+  C:0845H         LINE#         399
+  C:0847H         LINE#         402
+  C:0847H         LINE#         404
+  C:0853H         LINE#         406
+  C:0853H         LINE#         407
+  C:0856H         LINE#         408
+  C:0858H         LINE#         410
+  C:0858H         LINE#         413
+  C:085FH         LINE#         414
+  C:0864H         LINE#         415
+  C:086AH         LINE#         418
+  C:0875H         LINE#         419
+  C:0875H         LINE#         420
+  C:087BH         LINE#         421
+  C:087BH         LINE#         423
+  C:0884H         LINE#         424
+  C:0887H         LINE#         425
+  C:0887H         LINE#         426
+  C:0887H         LINE#         427
+  C:0887H         LINE#         428
+  C:088DH         LINE#         429
+  C:0890H         LINE#         430
+  -------         ENDPROC       GETDESCRIPTORREQUEST
+  -------         PROC          GETCONFIGURATIONREQUEST
+  C:0AE7H         LINE#         440
+  C:0AE7H         LINE#         441
+  C:0AE7H         LINE#         444
+  C:0AFFH         LINE#         446
+  C:0AFFH         LINE#         447
+  C:0B02H         LINE#         448
+  C:0B04H         LINE#         450
+  C:0B09H         LINE#         451
+  C:0B09H         LINE#         453
+  C:0B0EH         LINE#         455
+  C:0B16H         LINE#         457
+  C:0B16H         LINE#         458
+  C:0B18H         LINE#         461
+  C:0B18H         LINE#         463
+  C:0B21H         LINE#         466
+  C:0B24H         LINE#         467
+  C:0B24H         LINE#         468
+  C:0B2AH         LINE#         469
+  C:0B2DH         LINE#         470
+  -------         ENDPROC       GETCONFIGURATIONREQUEST
+BL51 BANKED LINKER/LOCATER V5.03            08/25/2012  02:16:55  PAGE 10
+
+
+  -------         PROC          GETINTERFACEREQUEST
+  C:0B74H         LINE#         480
+  C:0B74H         LINE#         481
+  C:0B74H         LINE#         483
+  C:0B88H         LINE#         485
+  C:0B88H         LINE#         486
+  C:0B88H         LINE#         487
+  C:0B8AH         LINE#         490
+  C:0B8AH         LINE#         492
+  C:0B9CH         LINE#         493
+  C:0BA1H         LINE#         495
+  C:0BA1H         LINE#         497
+  C:0BAAH         LINE#         500
+  C:0BB0H         LINE#         501
+  C:0BB3H         LINE#         502
+  C:0BB3H         LINE#         503
+  C:0BB3H         LINE#         504
+  C:0BB6H         LINE#         505
+  -------         ENDPROC       GETINTERFACEREQUEST
+  -------         ENDMOD        F34X_USB_STANDARD_REQUESTS
+
+  -------         MODULE        F34X_USB_UTILITIES
+  C:0000H         SYMBOL        _ICE_DUMMY_
+  C:0891H         PUBLIC        _FIFORead
+  C:0B2EH         PUBLIC        _FIFOWrite
+  C:072FH         PUBLIC        _SetInterface
+  C:0950H         PUBLIC        _HaltEndpoint
+  C:0D53H         PUBLIC        _GetEpStatus
+  C:09A6H         PUBLIC        _SetConfiguration
+  C:09FBH         PUBLIC        _EnableEndpoint
+  D:0096H         PUBLIC        USB0ADR
+  D:0097H         PUBLIC        USB0DAT
+  -------         PROC          _HALTENDPOINT
+  D:0006H         SYMBOL        uEp
+  -------         DO            
+  D:0005H         SYMBOL        bReturnState
+  D:0004H         SYMBOL        bIndex
+  -------         ENDDO         
+  C:0950H         LINE#         77
+  C:0950H         LINE#         78
+  C:0950H         LINE#         79
+  C:0950H         LINE#         82
+  C:095AH         LINE#         83
+  C:0967H         LINE#         86
+  C:0973H         LINE#         87
+  C:0973H         LINE#         88
+  C:0973H         LINE#         89
+  C:097EH         LINE#         90
+  C:0981H         LINE#         91
+  C:0983H         LINE#         92
+  C:0985H         LINE#         93
+  C:0985H         LINE#         94
+  C:0990H         LINE#         95
+  C:0993H         LINE#         96
+  C:0995H         LINE#         97
+  C:0997H         LINE#         98
+  C:0997H         LINE#         99
+  C:0999H         LINE#         101
+  C:0999H         LINE#         102
+  C:0999H         LINE#         104
+  C:09A3H         LINE#         105
+  C:09A5H         LINE#         106
+  -------         ENDPROC       _HALTENDPOINT
+  -------         PROC          _ENABLEENDPOINT
+  D:0006H         SYMBOL        uEp
+BL51 BANKED LINKER/LOCATER V5.03            08/25/2012  02:16:55  PAGE 11
+
+
+  -------         DO            
+  D:0005H         SYMBOL        bReturnState
+  D:0004H         SYMBOL        bIndex
+  -------         ENDDO         
+  C:09FBH         LINE#         117
+  C:09FBH         LINE#         118
+  C:09FBH         LINE#         119
+  C:09FBH         LINE#         122
+  C:0A05H         LINE#         123
+  C:0A12H         LINE#         126
+  C:0A1EH         LINE#         127
+  C:0A1EH         LINE#         128
+  C:0A1EH         LINE#         130
+  C:0A29H         LINE#         131
+  C:0A2CH         LINE#         132
+  C:0A2DH         LINE#         133
+  C:0A2FH         LINE#         134
+  C:0A2FH         LINE#         136
+  C:0A3AH         LINE#         137
+  C:0A3DH         LINE#         138
+  C:0A3EH         LINE#         139
+  C:0A40H         LINE#         140
+  C:0A40H         LINE#         141
+  C:0A42H         LINE#         143
+  C:0A42H         LINE#         144
+  C:0A42H         LINE#         146
+  C:0A4CH         LINE#         148
+  C:0A4EH         LINE#         149
+  -------         ENDPROC       _ENABLEENDPOINT
+  -------         PROC          _GETEPSTATUS
+  D:0006H         SYMBOL        uEp
+  -------         DO            
+  D:0005H         SYMBOL        bReturnState
+  -------         ENDDO         
+  C:0D53H         LINE#         160
+  C:0D53H         LINE#         161
+  C:0D53H         LINE#         165
+  C:0D5FH         LINE#         166
+  C:0D5FH         LINE#         167
+  C:0D5FH         LINE#         168
+  C:0D61H         LINE#         169
+  C:0D63H         LINE#         170
+  C:0D63H         LINE#         171
+  C:0D65H         LINE#         172
+  C:0D67H         LINE#         173
+  C:0D67H         LINE#         174
+  C:0D69H         LINE#         175
+  C:0D69H         LINE#         176
+  C:0D69H         LINE#         178
+  C:0D6BH         LINE#         179
+  -------         ENDPROC       _GETEPSTATUS
+  -------         PROC          _SETCONFIGURATION
+  D:0052H         SYMBOL        SelectConfig
+  -------         DO            
+  D:0053H         SYMBOL        bReturnState
+  D:0001H         SYMBOL        pIfStatus
+  -------         ENDDO         
+  C:09A6H         LINE#         190
+  C:09A8H         LINE#         191
+  C:09A8H         LINE#         192
+  C:09ABH         LINE#         198
+  C:09B7H         LINE#         202
+  C:09C1H         LINE#         203
+  C:09C1H         LINE#         204
+  C:09C4H         LINE#         205
+BL51 BANKED LINKER/LOCATER V5.03            08/25/2012  02:16:55  PAGE 12
+
+
+  C:09C6H         LINE#         208
+  C:09C6H         LINE#         210
+  C:09D4H         LINE#         213
+  C:09D7H         LINE#         216
+  C:09DDH         LINE#         219
+  C:09E4H         LINE#         220
+  C:09EBH         LINE#         221
+  C:09EFH         LINE#         223
+  C:09F2H         LINE#         225
+  C:09F5H         LINE#         226
+  C:09F8H         LINE#         227
+  C:09F8H         LINE#         229
+  C:09FAH         LINE#         230
+  -------         ENDPROC       _SETCONFIGURATION
+  -------         PROC          _SETINTERFACE
+  D:0001H         SYMBOL        pIfStatus
+  -------         DO            
+  D:0007H         SYMBOL        bReturnState
+  D:0006H         SYMBOL        bIndex
+  -------         ENDDO         
+  C:072FH         LINE#         241
+  C:072FH         LINE#         242
+  C:072FH         LINE#         243
+  C:0731H         LINE#         247
+  C:073BH         LINE#         250
+  C:0743H         LINE#         251
+  C:0743H         LINE#         253
+  C:0743H         LINE#         255
+  C:074EH         LINE#         258
+  C:0759H         LINE#         259
+  C:075EH         LINE#         260
+  C:0763H         LINE#         261
+  C:0766H         LINE#         262
+  C:0768H         LINE#         265
+  C:0773H         LINE#         267
+  C:077EH         LINE#         268
+  C:0783H         LINE#         269
+  C:0788H         LINE#         270
+  C:078BH         LINE#         271
+  C:078DH         LINE#         273
+  C:0799H         LINE#         275
+  C:0799H         LINE#         278
+  C:0799H         LINE#         281
+  C:0799H         LINE#         284
+  C:0799H         LINE#         285
+  C:079BH         LINE#         286
+  C:079BH         LINE#         287
+  C:07A5H         LINE#         289
+  C:07A5H         LINE#         290
+  -------         ENDPROC       _SETINTERFACE
+  -------         PROC          _FIFOREAD
+  D:0007H         SYMBOL        bEp
+  D:0056H         SYMBOL        uNumBytes
+  D:0058H         SYMBOL        pData
+  -------         DO            
+  D:0007H         SYMBOL        TargetReg
+  D:0006H         SYMBOL        i
+  -------         ENDDO         
+  C:0891H         LINE#         305
+  C:089BH         LINE#         306
+  C:089BH         LINE#         311
+  C:08A1H         LINE#         312
+  C:08A1H         LINE#         313
+  C:08A4H         LINE#         316
+  C:08A8H         LINE#         317
+BL51 BANKED LINKER/LOCATER V5.03            08/25/2012  02:16:55  PAGE 13
+
+
+  C:08ABH         LINE#         321
+  C:08BFH         LINE#         322
+  C:08BFH         LINE#         323
+  C:08C4H         LINE#         324
+  C:08D3H         LINE#         325
+  C:08DAH         LINE#         328
+  C:08DFH         LINE#         329
+  C:08EEH         LINE#         330
+  C:08F1H         LINE#         331
+  C:08F1H         LINE#         332
+  -------         ENDPROC       _FIFOREAD
+  -------         PROC          _FIFOWRITE
+  D:0007H         SYMBOL        bEp
+  D:0059H         SYMBOL        uNumBytes
+  D:005BH         SYMBOL        pData
+  -------         DO            
+  D:0007H         SYMBOL        TargetReg
+  D:0006H         SYMBOL        i
+  -------         ENDDO         
+  C:0B2EH         LINE#         347
+  C:0B38H         LINE#         348
+  C:0B38H         LINE#         353
+  C:0B3EH         LINE#         354
+  C:0B3EH         LINE#         355
+  C:0B42H         LINE#         358
+  C:0B47H         LINE#         360
+  C:0B4CH         LINE#         363
+  C:0B58H         LINE#         364
+  C:0B58H         LINE#         365
+  C:0B67H         LINE#         366
+  C:0B6CH         LINE#         367
+  C:0B73H         LINE#         368
+  C:0B73H         LINE#         369
+  -------         ENDPROC       _FIFOWRITE
+  -------         ENDMOD        F34X_USB_UTILITIES
+
+  -------         MODULE        F34X_USB_ISR
+  C:0000H         SYMBOL        _ICE_DUMMY_
+  D:00A0H         PUBLIC        P2
+  B:00A8H.7       PUBLIC        EA
+  D:008FH         PUBLIC        PSCTL
+  D:003EH         PUBLIC        NumBlocks
+  C:2800H         PUBLIC        Pg10
+  C:2A00H         PUBLIC        Pg11
+  C:2C00H         PUBLIC        Pg12
+  C:2E00H         PUBLIC        Pg13
+  C:3000H         PUBLIC        Pg14
+  C:060BH         PUBLIC        State_Machine
+  C:3200H         PUBLIC        Pg15
+  C:3400H         PUBLIC        Pg16
+  C:3600H         PUBLIC        Pg17
+  C:3800H         PUBLIC        Pg18
+  C:3A00H         PUBLIC        Pg19
+  C:08F2H         PUBLIC        Receive_File
+  D:003FH         PUBLIC        M_State
+  C:0D14H         PUBLIC        _Page_Erase
+  C:0564H         PUBLIC        USB_ISR
+  C:04B3H         PUBLIC        Receive_Setup
+  C:0348H         PUBLIC        _BulkOrInterruptIn
+  C:0402H         PUBLIC        _BulkOrInterruptOut
+  I:0064H         PUBLIC        PageIndices
+  B:00A0H.2       PUBLIC        Led1
+  B:00A0H.3       PUBLIC        Led2
+  D:0040H         PUBLIC        BytesToRead
+  C:0A4FH         PUBLIC        _Page_Write
+BL51 BANKED LINKER/LOCATER V5.03            08/25/2012  02:16:55  PAGE 14
+
+
+  D:0042H         PUBLIC        Buffer
+  D:0045H         PUBLIC        BytesToWrite
+  D:0047H         PUBLIC        BlocksRead
+  C:1400H         PUBLIC        Pg0
+  C:1200H         PUBLIC        LengthFile
+  C:1600H         PUBLIC        Pg1
+  D:0048H         PUBLIC        BlockIndex
+  C:1800H         PUBLIC        Pg2
+  C:1A00H         PUBLIC        Pg3
+  C:1C00H         PUBLIC        Pg4
+  C:1E00H         PUBLIC        Pg5
+  C:2000H         PUBLIC        Pg6
+  C:2200H         PUBLIC        Pg7
+  C:2400H         PUBLIC        Pg8
+  C:2600H         PUBLIC        Pg9
+  C:0A9DH         PUBLIC        USBReset
+  X:0000H         PUBLIC        TempStorage
+  D:0096H         PUBLIC        USB0ADR
+  D:0097H         PUBLIC        USB0DAT
+  D:0049H         PUBLIC        BlocksWrote
+  C:01F0H         PUBLIC        Endpoint0
+  D:004AH         PUBLIC        ReadIndex
+  D:004DH         PUBLIC        PageIndex
+  D:00B7H         PUBLIC        FLKEY
+  -------         PROC          USB_ISR
+  -------         DO            
+  D:0007H         SYMBOL        bCommonInt
+  D:004EH         SYMBOL        bInInt
+  D:004FH         SYMBOL        bOutInt
+  -------         ENDDO         
+  C:0564H         LINE#         194
+  C:0581H         LINE#         196
+  C:0581H         LINE#         199
+  C:058BH         LINE#         200
+  C:0596H         LINE#         201
+  C:05A1H         LINE#         204
+  C:05A5H         LINE#         205
+  C:05A5H         LINE#         207
+  C:05A8H         LINE#         208
+  C:05ABH         LINE#         209
+  C:05ABH         LINE#         212
+  C:05B0H         LINE#         213
+  C:05B0H         LINE#         215
+  C:05B3H         LINE#         216
+  C:05B3H         LINE#         219
+  C:05B8H         LINE#         220
+  C:05B8H         LINE#         221
+  C:05BDH         LINE#         222
+  C:05BDH         LINE#         223
+  C:05C0H         LINE#         224
+  C:05C0H         LINE#         225
+  C:05C5H         LINE#         227
+  C:05C5H         LINE#         229
+  C:05D2H         LINE#         230
+  C:05D2H         LINE#         231
+  C:05D2H         LINE#         234
+  C:05D7H         LINE#         235
+  C:05D7H         LINE#         237
+  C:05E0H         LINE#         239
+  C:05EDH         LINE#         240
+  C:05EDH         LINE#         242
+  C:05F0H         LINE#         243
+  -------         ENDPROC       USB_ISR
+  -------         PROC          ENDPOINT0
+  -------         DO            
+BL51 BANKED LINKER/LOCATER V5.03            08/25/2012  02:16:55  PAGE 15
+
+
+  D:0050H         SYMBOL        bTemp
+  D:0007H         SYMBOL        bCsr1
+  D:0051H         SYMBOL        uTxBytes
+  -------         ENDDO         
+  C:01F0H         LINE#         257
+  C:01F0H         LINE#         258
+  C:01F0H         LINE#         259
+  C:01F3H         LINE#         262
+  C:01FDH         LINE#         263
+  C:0207H         LINE#         266
+  C:020BH         LINE#         267
+  C:020BH         LINE#         268
+  C:0216H         LINE#         269
+  C:0219H         LINE#         270
+  C:021CH         LINE#         271
+  C:021CH         LINE#         274
+  C:0220H         LINE#         275
+  C:0220H         LINE#         276
+  C:022BH         LINE#         277
+  C:022EH         LINE#         278
+  C:0231H         LINE#         279
+  C:0231H         LINE#         282
+  C:0238H         LINE#         283
+  C:0238H         LINE#         285
+  C:0247H         LINE#         288
+  C:024AH         LINE#         289
+  C:024DH         LINE#         290
+  C:0250H         LINE#         293
+  C:0253H         LINE#         294
+  C:0256H         LINE#         295
+  C:0259H         LINE#         298
+  C:025CH         LINE#         299
+  C:025FH         LINE#         300
+  C:0262H         LINE#         303
+  C:026EH         LINE#         304
+  C:026EH         LINE#         305
+  C:026EH         LINE#         307
+  C:0283H         LINE#         308
+  C:0283H         LINE#         309
+  C:0283H         LINE#         310
+  C:0286H         LINE#         311
+  C:0288H         LINE#         312
+  C:0288H         LINE#         313
+  C:028BH         LINE#         314
+  C:028DH         LINE#         315
+  C:028DH         LINE#         316
+  C:0290H         LINE#         317
+  C:0292H         LINE#         318
+  C:0292H         LINE#         319
+  C:0295H         LINE#         320
+  C:0297H         LINE#         321
+  C:0297H         LINE#         322
+  C:029AH         LINE#         323
+  C:029CH         LINE#         325
+  C:029CH         LINE#         326
+  C:029CH         LINE#         329
+  C:029CH         LINE#         330
+  C:029CH         LINE#         333
+  C:029CH         LINE#         334
+  C:02AEH         LINE#         335
+  C:02AEH         LINE#         336
+  C:02AEH         LINE#         337
+  C:02B1H         LINE#         338
+  C:02B3H         LINE#         339
+  C:02B3H         LINE#         340
+BL51 BANKED LINKER/LOCATER V5.03            08/25/2012  02:16:55  PAGE 16
+
+
+  C:02B6H         LINE#         341
+  C:02B8H         LINE#         342
+  C:02B8H         LINE#         343
+  C:02BBH         LINE#         344
+  C:02BDH         LINE#         345
+  C:02BDH         LINE#         346
+  C:02C0H         LINE#         347
+  C:02C2H         LINE#         349
+  C:02C2H         LINE#         350
+  C:02C2H         LINE#         351
+  C:02C2H         LINE#         352
+  C:02C4H         LINE#         353
+  C:02C4H         LINE#         354
+  C:02C4H         LINE#         356
+  C:02C4H         LINE#         357
+  C:02C7H         LINE#         358
+  C:02C7H         LINE#         361
+  C:02CAH         LINE#         362
+  C:02CFH         LINE#         363
+  C:02CFH         LINE#         364
+  C:02D2H         LINE#         366
+  C:02D5H         LINE#         367
+  C:02D5H         LINE#         369
+  C:02E0H         LINE#         370
+  C:02E0H         LINE#         372
+  C:02E3H         LINE#         375
+  C:02E9H         LINE#         376
+  C:02E9H         LINE#         380
+  C:02F4H         LINE#         381
+  C:02F4H         LINE#         382
+  C:02F7H         LINE#         383
+  C:02FCH         LINE#         384
+  C:02FFH         LINE#         386
+  C:0301H         LINE#         387
+  C:0303H         LINE#         391
+  C:0303H         LINE#         392
+  C:0306H         LINE#         393
+  C:0312H         LINE#         394
+  C:0312H         LINE#         397
+  C:0322H         LINE#         400
+  C:0333H         LINE#         403
+  C:0336H         LINE#         407
+  C:0341H         LINE#         408
+  C:0341H         LINE#         410
+  -------         ENDPROC       ENDPOINT0
+  -------         PROC          _BULKORINTERRUPTOUT
+  D:0050H         SYMBOL        pEpOutStatus
+  -------         DO            
+  D:0053H         SYMBOL        uBytes
+  D:0007H         SYMBOL        bTemp
+  D:0006H         SYMBOL        bCsrL
+  D:0055H         SYMBOL        bCsrH
+  -------         ENDDO         
+  C:0402H         LINE#         421
+  C:0408H         LINE#         422
+  C:0408H         LINE#         424
+  C:040AH         LINE#         427
+  C:0417H         LINE#         428
+  C:0421H         LINE#         429
+  C:042CH         LINE#         432
+  C:043CH         LINE#         433
+  C:043CH         LINE#         435
+  C:0440H         LINE#         436
+  C:0440H         LINE#         438
+  C:044BH         LINE#         439
+BL51 BANKED LINKER/LOCATER V5.03            08/25/2012  02:16:55  PAGE 17
+
+
+  C:044BH         LINE#         442
+  C:044FH         LINE#         443
+  C:044FH         LINE#         445
+  C:0459H         LINE#         446
+  C:045FH         LINE#         448
+  C:0469H         LINE#         449
+  C:046EH         LINE#         451
+  C:0473H         LINE#         452
+  C:0473H         LINE#         453
+  C:0479H         LINE#         454
+  C:047BH         LINE#         456
+  C:047BH         LINE#         457
+  C:0494H         LINE#         458
+  C:0494H         LINE#         461
+  C:04A7H         LINE#         462
+  C:04B2H         LINE#         467
+  C:04B2H         LINE#         468
+  C:04B2H         LINE#         469
+  -------         ENDPROC       _BULKORINTERRUPTOUT
+  C:0342H         SYMBOL        L?0145
+  C:0344H         SYMBOL        L?0146
+  -------         PROC          L?0144
+  -------         ENDPROC       L?0144
+  C:0342H         SYMBOL        L?0145
+  C:0344H         SYMBOL        L?0146
+  -------         PROC          _BULKORINTERRUPTIN
+  D:0050H         SYMBOL        pEpInStatus
+  D:0053H         SYMBOL        DataToWrite
+  D:0056H         SYMBOL        NumBytes
+  -------         DO            
+  D:0007H         SYMBOL        bCsrL
+  D:0058H         SYMBOL        bCsrH
+  -------         ENDDO         
+  C:0348H         LINE#         484
+  C:034EH         LINE#         486
+  C:034EH         LINE#         487
+  C:034EH         LINE#         489
+  C:035BH         LINE#         490
+  C:0365H         LINE#         491
+  C:0370H         LINE#         494
+  C:0383H         LINE#         495
+  C:0383H         LINE#         497
+  C:0387H         LINE#         498
+  C:0387H         LINE#         499
+  C:0392H         LINE#         501
+  C:0392H         LINE#         504
+  C:0396H         LINE#         505
+  C:0396H         LINE#         506
+  C:03A7H         LINE#         507
+  C:03BFH         LINE#         511
+  C:03DBH         LINE#         513
+  C:03E8H         LINE#         514
+  C:03F4H         LINE#         515
+  C:03F6H         LINE#         518
+  C:0401H         LINE#         523
+  C:0401H         LINE#         524
+  C:0401H         LINE#         525
+  -------         ENDPROC       _BULKORINTERRUPTIN
+  -------         PROC          USBRESET
+  -------         DO            
+  D:0006H         SYMBOL        i
+  D:0007H         SYMBOL        bPower
+  D:0050H         SYMBOL        pDevStatus
+  -------         ENDDO         
+  C:0A9DH         LINE#         538
+BL51 BANKED LINKER/LOCATER V5.03            08/25/2012  02:16:55  PAGE 18
+
+
+  C:0A9DH         LINE#         539
+  C:0A9DH         LINE#         540
+  C:0A9FH         LINE#         544
+  C:0AA7H         LINE#         545
+  C:0AA8H         LINE#         546
+  C:0AA8H         LINE#         547
+  C:0ABAH         LINE#         548
+  C:0ABEH         LINE#         551
+  C:0AC1H         LINE#         555
+  C:0AC3H         LINE#         556
+  C:0AC5H         LINE#         561
+  C:0AC7H         LINE#         562
+  C:0AC9H         LINE#         563
+  C:0ACEH         LINE#         566
+  C:0AD1H         LINE#         567
+  C:0AD5H         LINE#         570
+  C:0AD8H         LINE#         571
+  C:0ADCH         LINE#         575
+  C:0ADCH         LINE#         576
+  C:0ADCH         LINE#         577
+  C:0ADCH         LINE#         578
+  C:0ADCH         LINE#         582
+  C:0ADCH         LINE#         583
+  C:0ADCH         LINE#         584
+  C:0ADCH         LINE#         585
+  C:0ADCH         LINE#         587
+  C:0AE6H         LINE#         588
+  -------         ENDPROC       USBRESET
+  -------         PROC          _PAGE_ERASE
+  D:0001H         SYMBOL        Page_Address
+  -------         DO            
+  D:0007H         SYMBOL        EA_Save
+  D:0082H         SYMBOL        pwrite
+  -------         ENDDO         
+  C:0D14H         LINE#         601
+  C:0D14H         LINE#         607
+  C:0D19H         LINE#         608
+  C:0D1BH         LINE#         609
+  C:0D23H         LINE#         610
+  C:0D26H         LINE#         612
+  C:0D29H         LINE#         613
+  C:0D2CH         LINE#         614
+  C:0D2EH         LINE#         617
+  C:0D30H         LINE#         618
+  C:0D35H         LINE#         619
+  -------         ENDPROC       _PAGE_ERASE
+  -------         PROC          _PAGE_WRITE
+  D:0001H         SYMBOL        PageAddress
+  -------         DO            
+  D:0050H         SYMBOL        EA_Save
+  D:0006H         SYMBOL        pwrite
+  D:0051H         SYMBOL        pread
+  D:0004H         SYMBOL        x
+  -------         ENDDO         
+  C:0A4FH         LINE#         631
+  C:0A4FH         LINE#         639
+  C:0A55H         LINE#         640
+  C:0A5BH         LINE#         641
+  C:0A5DH         LINE#         642
+  C:0A61H         LINE#         643
+  C:0A64H         LINE#         644
+  C:0A67H         LINE#         645
+  C:0A67H         LINE#         646
+  C:0A6AH         LINE#         647
+  C:0A6DH         LINE#         648
+BL51 BANKED LINKER/LOCATER V5.03            08/25/2012  02:16:55  PAGE 19
+
+
+  C:0A79H         LINE#         650
+  C:0A81H         LINE#         651
+  C:0A86H         LINE#         652
+  C:0A93H         LINE#         653
+  C:0A96H         LINE#         654
+  C:0A9CH         LINE#         655
+  -------         ENDPROC       _PAGE_WRITE
+  -------         PROC          STATE_MACHINE
+  C:060BH         LINE#         666
+  C:060BH         LINE#         667
+  C:060BH         LINE#         668
+  C:0629H         LINE#         669
+  C:0629H         LINE#         672
+  C:0629H         LINE#         673
+  C:0629H         LINE#         676
+  C:0629H         LINE#         677
+  C:0629H         LINE#         679
+  C:0629H         LINE#         680
+  C:062CH         LINE#         681
+  C:062CH         LINE#         683
+  C:062CH         LINE#         684
+  C:062FH         LINE#         685
+  C:062FH         LINE#         687
+  C:062FH         LINE#         688
+  C:0632H         LINE#         689
+  C:0633H         LINE#         691
+  C:0633H         LINE#         692
+  C:063EH         LINE#         693
+  C:063EH         LINE#         694
+  C:0650H         LINE#         699
+  C:065BH         LINE#         700
+  C:065BH         LINE#         702
+  C:066AH         LINE#         703
+  C:066CH         LINE#         705
+  C:066CH         LINE#         707
+  C:067BH         LINE#         708
+  C:067BH         LINE#         709
+  C:067DH         LINE#         711
+  C:067DH         LINE#         712
+  C:068FH         LINE#         715
+  C:068FH         LINE#         717
+  C:0695H         LINE#         718
+  C:0695H         LINE#         719
+  C:0697H         LINE#         720
+  C:0697H         LINE#         721
+  C:069CH         LINE#         722
+  C:069CH         LINE#         723
+  C:069EH         LINE#         724
+  C:069EH         LINE#         725
+  C:069FH         LINE#         727
+  C:069FH         LINE#         728
+  C:06A2H         LINE#         729
+  C:06A2H         LINE#         730
+  C:06A2H         LINE#         731
+  -------         ENDPROC       STATE_MACHINE
+  -------         PROC          RECEIVE_SETUP
+  C:04B3H         LINE#         745
+  C:04B3H         LINE#         746
+  C:04B3H         LINE#         748
+  C:04B7H         LINE#         749
+  C:04B7H         LINE#         750
+  C:04B9H         LINE#         751
+  C:04BFH         LINE#         752
+  C:04CEH         LINE#         753
+  C:04D1H         LINE#         754
+BL51 BANKED LINKER/LOCATER V5.03            08/25/2012  02:16:55  PAGE 20
+
+
+  C:04D8H         LINE#         755
+  C:04DFH         LINE#         756
+  C:04F1H         LINE#         757
+  C:04F4H         LINE#         758
+  C:04F7H         LINE#         759
+  C:04FDH         LINE#         760
+  C:050CH         LINE#         761
+  C:050EH         LINE#         762
+  C:050FH         LINE#         764
+  C:050FH         LINE#         765
+  C:051DH         LINE#         766
+  C:052CH         LINE#         768
+  C:0531H         LINE#         769
+  C:0531H         LINE#         770
+  C:0534H         LINE#         771
+  C:0535H         LINE#         773
+  C:0535H         LINE#         775
+  C:053BH         LINE#         776
+  C:053BH         LINE#         777
+  C:053DH         LINE#         779
+  C:053DH         LINE#         781
+  C:0543H         LINE#         782
+  C:0547H         LINE#         783
+  C:054BH         LINE#         786
+  C:0554H         LINE#         787
+  C:0557H         LINE#         789
+  C:055AH         LINE#         790
+  C:055CH         LINE#         791
+  C:055EH         LINE#         792
+  C:0560H         LINE#         793
+  C:0563H         LINE#         794
+  C:0563H         LINE#         795
+  C:0563H         LINE#         796
+  -------         ENDPROC       RECEIVE_SETUP
+  -------         PROC          RECEIVE_FILE
+  C:08F2H         LINE#         812
+  C:08F2H         LINE#         813
+  C:08F2H         LINE#         814
+  C:08F4H         LINE#         815
+  C:08F6H         LINE#         819
+  C:0902H         LINE#         820
+  C:0902H         LINE#         821
+  C:0916H         LINE#         822
+  C:092AH         LINE#         823
+  C:092CH         LINE#         824
+  C:092EH         LINE#         825
+  C:0931H         LINE#         826
+  C:0934H         LINE#         829
+  C:0945H         LINE#         830
+  C:0945H         LINE#         833
+  C:094AH         LINE#         834
+  C:094AH         LINE#         835
+  C:094DH         LINE#         836
+  C:094FH         LINE#         837
+  C:094FH         LINE#         838
+  -------         ENDPROC       RECEIVE_FILE
+  -------         ENDMOD        F34X_USB_ISR
+
+  -------         MODULE        ?C?CLDPTR
+  C:0046H         PUBLIC        ?C?CLDPTR
+  -------         ENDMOD        ?C?CLDPTR
+
+  -------         MODULE        ?C?CLDOPTR
+  C:005FH         PUBLIC        ?C?CLDOPTR
+  -------         ENDMOD        ?C?CLDOPTR
+BL51 BANKED LINKER/LOCATER V5.03            08/25/2012  02:16:55  PAGE 21
+
+
+
+  -------         MODULE        ?C?CSTPTR
+  C:008CH         PUBLIC        ?C?CSTPTR
+  -------         ENDMOD        ?C?CSTPTR
+
+  -------         MODULE        ?C?CSTOPTR
+  C:009EH         PUBLIC        ?C?CSTOPTR
+  -------         ENDMOD        ?C?CSTOPTR
+
+  -------         MODULE        ?C?ILDOPTR
+  C:00C0H         PUBLIC        ?C?ILDOPTR
+  -------         ENDMOD        ?C?ILDOPTR
+
+  -------         MODULE        ?C?ISTOPTR
+  C:00F8H         PUBLIC        ?C?ISTOPTR
+  -------         ENDMOD        ?C?ISTOPTR
+
+  -------         MODULE        ?C?PLDOPTR
+  C:0125H         PUBLIC        ?C?PLDOPTR
+  -------         ENDMOD        ?C?PLDOPTR
+
+  -------         MODULE        ?C?PSTOPTR
+  C:0155H         PUBLIC        ?C?PSTOPTR
+  -------         ENDMOD        ?C?PSTOPTR
+
+  -------         MODULE        ?C?PLDIDATA
+  C:01AEH         PUBLIC        ?C?PLDIDATA
+  -------         ENDMOD        ?C?PLDIDATA
+
+  -------         MODULE        ?C?PSTIDATA
+  C:01B7H         PUBLIC        ?C?PSTIDATA
+  -------         ENDMOD        ?C?PSTIDATA
+
+  -------         MODULE        ?C?PLDXDATA
+  C:01C0H         PUBLIC        ?C?PLDXDATA
+  -------         ENDMOD        ?C?PLDXDATA
+
+  -------         MODULE        ?C?PSTXDATA
+  C:01C9H         PUBLIC        ?C?PSTXDATA
+  -------         ENDMOD        ?C?PSTXDATA
+
+  -------         MODULE        ?C?PLDPDATA
+  C:01D2H         PUBLIC        ?C?PLDPDATA
+  -------         ENDMOD        ?C?PLDPDATA
+
+  -------         MODULE        ?C?PSTPDATA
+  C:01DBH         PUBLIC        ?C?PSTPDATA
+  -------         ENDMOD        ?C?PSTPDATA
+
+  -------         MODULE        ?C?PLDCODE
+  C:01E4H         PUBLIC        ?C?PLDCODE
+  -------         ENDMOD        ?C?PLDCODE
+
+Program Size: data=161.0 xdata=512 code=3512
+LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)

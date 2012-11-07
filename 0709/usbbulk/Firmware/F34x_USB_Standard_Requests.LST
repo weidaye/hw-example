@@ -1,0 +1,548 @@
+C51 COMPILER V7.06   F34X_USB_STANDARD_REQUESTS                                            08/25/2012 02:16:54 PAGE 1   
+
+
+C51 COMPILER V7.06, COMPILATION OF MODULE F34X_USB_STANDARD_REQUESTS
+OBJECT MODULE PLACED IN F34x_USB_Standard_Requests.OBJ
+COMPILER INVOKED BY: c:\Keil\C51\BIN\c51.exe F34x_USB_Standard_Requests.c DB OE BR
+
+stmt level    source
+
+   1          //-----------------------------------------------------------------------------
+   2          // F34x_USB_Standard_Requests.c
+   3          //-----------------------------------------------------------------------------
+   4          // Copyright 2005 Silicon Laboratories, Inc.
+   5          // http://www.silabs.com
+   6          //
+   7          // Program Description:
+   8          //
+   9          // Source file for USB firmware. Includes service routine
+  10          // for usb standard device requests.
+  11          //
+  12          //
+  13          // How To Test:    See Readme.txt
+  14          //
+  15          //
+  16          // FID:            34X000012
+  17          // Target:         C8051F34x
+  18          // Tool chain:     Keil C51 7.50 / Keil EVAL C51
+  19          //                 Silicon Laboratories IDE version 2.6
+  20          // Command Line:   See Readme.txt
+  21          // Project Name:   F34x_USB_Bulk
+  22          //
+  23          //
+  24          // Release 1.4
+  25          //    -21 FEB 2008 (TP)
+  26          //    -Updated line 497 for Keil 8.x
+  27          //
+  28          // Release 1.3
+  29          //    -All changes by GP
+  30          //    -21 NOV 2005
+  31          //    -Changed revision number to match project revision
+  32          //     No content changes to this file
+  33          //    -Modified file to fit new formatting guidelines
+  34          //    -Changed file name from usb_stdreq.c
+  35          //
+  36          //
+  37          // Release 1.2
+  38          //    -Initial Revision (JS)
+  39          //    -XX AUG 2003
+  40          //
+  41          
+  42          //-----------------------------------------------------------------------------
+  43          // Includes
+  44          //-----------------------------------------------------------------------------
+  45          
+  46          #include "c8051F340.h"
+  47          #include "F34x_USB_Registers.h"
+  48          #include "F34x_USB_Structs.h"
+  49          #include "F34x_USB_Main.h"
+  50          #include "F34x_USB_Descriptors.h"
+  51          #include "F34x_USB_Config.h"
+  52          #include "F34x_USB_Request.h"
+  53          
+  54          //-----------------------------------------------------------------------------
+  55          // Extern Global Variables
+C51 COMPILER V7.06   F34X_USB_STANDARD_REQUESTS                                            08/25/2012 02:16:54 PAGE 2   
+
+  56          //-----------------------------------------------------------------------------
+  57          
+  58          extern code DESCRIPTORS gDescriptorMap;
+  59          extern DEVICE_STATUS gDeviceStatus;
+  60          extern EP_STATUS gEp0Status;
+  61          extern EP_STATUS gEp2OutStatus;
+  62          extern EP_STATUS gEp1InStatus;
+  63          extern EP0_COMMAND gEp0Command;
+  64          
+  65          //-----------------------------------------------------------------------------
+  66          // Global Variables
+  67          //-----------------------------------------------------------------------------
+  68          
+  69          BYTE        bEpState;
+  70          UINT        uNumBytes;
+  71          PIF_STATUS  pIfStatus;
+  72          
+  73          //------------------------------------------------------------------------
+  74          //  Standard Request Routines
+  75          //------------------------------------------------------------------------
+  76          //
+  77          // These functions should be called when an endpoint0 command has
+  78          // been received with a corresponding "bRequest" field.
+  79          //
+  80          // - Each routine performs all command field checking, and
+  81          //   modifies fields of the Ep0Status structure accordingly
+  82          //
+  83          // After a call to a standard request routine, the calling routine
+  84          // should check Ep0Status.bEpState to determine the required action
+  85          // (i.e., send a STALL for EP_ERROR, load the FIFO for EP_TX).
+  86          // For transmit status, the data pointer (Ep0Status.pData),
+  87          // and data length (Ep0Status.uNumBytes) are prepared before the
+  88          // standard request routine returns. The calling routine must write
+  89          // the data to the FIFO and handle all data transfer
+  90          
+  91          //-----------------------------------------------------------------------------
+  92          // SetAddressRequest
+  93          //-----------------------------------------------------------------------------
+  94          //
+  95          // Return Value : None
+  96          // Parameters   : None
+  97          //
+  98          //-----------------------------------------------------------------------------
+  99          void SetAddressRequest ()
+ 100          {
+ 101   1         // Index and Length fields must be zero
+ 102   1         // Device state must be default or addressed
+ 103   1         if ((gEp0Command.wIndex.i) || (gEp0Command.wLength.i) ||
+ 104   1         (gDeviceStatus.bDevState == DEV_CONFIG))
+ 105   1         {
+ 106   2            bEpState = EP_ERROR;
+ 107   2         }
+ 108   1      
+ 109   1         else
+ 110   1         {
+ 111   2            // Assign new function address
+ 112   2            UWRITE_BYTE(FADDR, gEp0Command.wValue.c[1]);
+ 113   2            if (gDeviceStatus.bDevState == DEV_DEFAULT &&
+ 114   2            gEp0Command.wValue.c[1] != 0)
+ 115   2            {
+ 116   3               gDeviceStatus.bDevState = DEV_ADDRESS;
+ 117   3            }
+C51 COMPILER V7.06   F34X_USB_STANDARD_REQUESTS                                            08/25/2012 02:16:54 PAGE 3   
+
+ 118   2            if (gDeviceStatus.bDevState == DEV_ADDRESS &&
+ 119   2            gEp0Command.wValue.c[1] == 0)
+ 120   2            {
+ 121   3               gDeviceStatus.bDevState = DEV_ADDRESS;
+ 122   3            }
+ 123   2            bEpState = EP_IDLE;
+ 124   2         }
+ 125   1         gEp0Status.bEpState = bEpState;
+ 126   1      }
+ 127          
+ 128          //-----------------------------------------------------------------------------
+ 129          // SetFeatureRequest
+ 130          //-----------------------------------------------------------------------------
+ 131          //
+ 132          // Return Value : None
+ 133          // Parameters   : None
+ 134          //
+ 135          //-----------------------------------------------------------------------------
+ 136          void SetFeatureRequest ()
+ 137          {
+ 138   1         // Length field must be zero
+ 139   1         // Device state must be configured, or addressed with Command Index
+ 140   1         // field == 0
+ 141   1         if ((gEp0Command.wLength.i != 0) ||
+ 142   1         (gDeviceStatus.bDevState == DEV_DEFAULT) ||
+ 143   1         (gDeviceStatus.bDevState == DEV_ADDRESS && gEp0Command.wIndex.i != 0))
+ 144   1         {
+ 145   2            bEpState = EP_ERROR;
+ 146   2         }
+ 147   1      
+ 148   1         // Handle based on recipient
+ 149   1         switch(gEp0Command.bmRequestType & CMD_MASK_RECIP)
+ 150   1         {
+ 151   2            // Device Request - Return error as remote wakeup is not supported
+ 152   2            case CMD_RECIP_DEV:
+ 153   2               bEpState = EP_ERROR;
+ 154   2               break;
+ 155   2      
+ 156   2            // Endpoint Request
+ 157   2            case CMD_RECIP_EP:
+ 158   2               if (gEp0Command.wValue.i == ENDPOINT_HALT)
+ 159   2               {
+ 160   3                  bEpState = HaltEndpoint(gEp0Command.wIndex.i);
+ 161   3                  break;
+ 162   3               }
+ 163   2               else
+ 164   2               {
+ 165   3                  bEpState = EP_ERROR;
+ 166   3                  break;
+ 167   3               }
+ 168   2            default:
+ 169   2               bEpState = EP_ERROR;
+ 170   2               break;
+ 171   2         }
+ 172   1         gEp0Status.bEpState = bEpState;
+ 173   1      }
+ 174          
+ 175          //-----------------------------------------------------------------------------
+ 176          // ClearFeatureRequest
+ 177          //-----------------------------------------------------------------------------
+ 178          //
+ 179          // Return Value : None
+C51 COMPILER V7.06   F34X_USB_STANDARD_REQUESTS                                            08/25/2012 02:16:54 PAGE 4   
+
+ 180          // Parameters   : None
+ 181          //
+ 182          //-----------------------------------------------------------------------------
+ 183          void ClearFeatureRequest ()
+ 184          {
+ 185   1         // Length field must be zero
+ 186   1         // Device state must be configured, or addressed with Command Index
+ 187   1         // field == 0
+ 188   1         if ((gEp0Command.wLength.i != 0) || (gDeviceStatus.bDevState == DEV_DEFAULT) ||
+ 189   1         (gDeviceStatus.bDevState == DEV_ADDRESS && gEp0Command.wIndex.i != 0))
+ 190   1         {
+ 191   2            bEpState = EP_ERROR;
+ 192   2         }
+ 193   1      
+ 194   1         // Handle based on recipient
+ 195   1         switch(gEp0Command.bmRequestType & CMD_MASK_RECIP)
+ 196   1         {
+ 197   2            // Device Request
+ 198   2            case CMD_RECIP_DEV:
+ 199   2               // Remote wakeup not supported
+ 200   2               bEpState = EP_ERROR;
+ 201   2               break;
+ 202   2      
+ 203   2            // Endpoint Request
+ 204   2            case CMD_RECIP_EP:
+ 205   2               if (gEp0Command.wValue.i == ENDPOINT_HALT)
+ 206   2               {
+ 207   3                  // Enable the selected endpoint.
+ 208   3                  bEpState = EnableEndpoint(gEp0Command.wIndex.i);
+ 209   3                  break;
+ 210   3               }
+ 211   2               else
+ 212   2               {
+ 213   3                 bEpState = EP_ERROR;
+ 214   3                 break;
+ 215   3               }
+ 216   2            default:
+ 217   2               bEpState = EP_ERROR;
+ 218   2               break;
+ 219   2         }
+ 220   1         gEp0Status.bEpState = bEpState;
+ 221   1      }
+ 222          
+ 223          //-----------------------------------------------------------------------------
+ 224          // SetConfigurationRequest
+ 225          //-----------------------------------------------------------------------------
+ 226          //
+ 227          // Return Value : None
+ 228          // Parameters   : None
+ 229          //
+ 230          //-----------------------------------------------------------------------------
+ 231          void SetConfigurationRequest ()
+ 232          {
+ 233   1         // Index and Length fields must be zero
+ 234   1         // Device state must be addressed or configured
+ 235   1         if ((gEp0Command.wIndex.i) || (gEp0Command.wLength.i) ||
+ 236   1         (gDeviceStatus.bDevState == DEV_DEFAULT))
+ 237   1         {
+ 238   2            bEpState = EP_ERROR;
+ 239   2         }
+ 240   1      
+ 241   1         else
+C51 COMPILER V7.06   F34X_USB_STANDARD_REQUESTS                                            08/25/2012 02:16:54 PAGE 5   
+
+ 242   1         {
+ 243   2            // Make sure assigned configuration exists
+ 244   2            if (gEp0Command.wValue.c[1] >
+ 245   2            gDescriptorMap.bStdDevDsc[std_bNumConfigurations])
+ 246   2            {
+ 247   3               bEpState = EP_ERROR;
+ 248   3            }
+ 249   2      
+ 250   2            // Handle zero configuration assignment
+ 251   2            else if  (gEp0Command.wValue.c[1] == 0)
+ 252   2               gDeviceStatus.bDevState = DEV_ADDRESS;
+ 253   2      
+ 254   2            // Select the assigned configuration
+ 255   2            else
+ 256   2               bEpState = SetConfiguration(gEp0Command.wValue.c[1]);
+ 257   2         }
+ 258   1         gEp0Status.bEpState = bEpState;
+ 259   1      }
+ 260          
+ 261          
+ 262          //-----------------------------------------------------------------------------
+ 263          // SetInterfaceRequest
+ 264          //-----------------------------------------------------------------------------
+ 265          //
+ 266          // Return Value : None
+ 267          // Parameters   : None
+ 268          //
+ 269          //-----------------------------------------------------------------------------
+ 270          void SetInterfaceRequest()
+ 271          {
+ 272   1         /*
+ 273   1         // Length field must be zero
+ 274   1         if ((gEp0Command.wLength.i) || (gDeviceStatus.bDevState != DEV_CONFIG))
+ 275   1            bEpState = EP_ERROR;
+ 276   1      
+ 277   1         else
+ 278   1         {
+ 279   1            // Check that target interface exists for this configuration
+ 280   1            if(gEp0Command.wIndex.i > gDeviceStatus.bNumInterf - 1)
+ 281   1               bEpState = EP_ERROR;
+ 282   1      
+ 283   1            else
+ 284   1            {
+ 285   1               // Get pointer to interface status structure
+ 286   1               pIfStatus = (PIF_STATUS)&gDeviceStatus.IfStatus;
+ 287   1      
+ 288   1               // Check that alternate setting exists for the interface
+ 289   1               if (gEp0Command.wValue.i > pIfStatus->bNumAlts)
+ 290   1                  bEpState = EP_ERROR;
+ 291   1      
+ 292   1               // Assign alternate setting
+ 293   1               else
+ 294   1               {
+ 295   1                  pIfStatus->bCurrentAlt = gEp0Command.wValue.i;
+ 296   1                  bEpState = SetInterface(pIfStatus);
+ 297   1               }
+ 298   1            }
+ 299   1         }
+ 300   1         gEp0Status.bEpState = bEpState;
+ 301   1         */
+ 302   1      }
+ 303          
+C51 COMPILER V7.06   F34X_USB_STANDARD_REQUESTS                                            08/25/2012 02:16:54 PAGE 6   
+
+ 304          //-----------------------------------------------------------------------------
+ 305          // GetStatusRequest
+ 306          //-----------------------------------------------------------------------------
+ 307          //
+ 308          // Return Value : None
+ 309          // Parameters   : None
+ 310          //
+ 311          //-----------------------------------------------------------------------------
+ 312          void GetStatusRequest ()
+ 313          {
+ 314   1         // Value field must be zero; Length field must be 2
+ 315   1         if ((gEp0Command.wValue.i != 0) || (gEp0Command.wLength.i != 0x02) ||
+ 316   1         (gDeviceStatus.bDevState == DEV_DEFAULT) ||
+ 317   1         (gDeviceStatus.bDevState == DEV_ADDRESS && gEp0Command.wIndex.i != 0))
+ 318   1         {
+ 319   2            bEpState = EP_ERROR;
+ 320   2         }
+ 321   1      
+ 322   1         else
+ 323   1         {
+ 324   2            // Check for desired status (device, interface, endpoint)
+ 325   2            switch (gEp0Command.bmRequestType & CMD_MASK_RECIP)
+ 326   2            {
+ 327   3               // Device
+ 328   3               case CMD_RECIP_DEV:
+ 329   3                  // Index must be zero for a Device status request
+ 330   3                  if (gEp0Command.wIndex.i != 0)
+ 331   3                     bEpState = EP_ERROR;
+ 332   3                  else
+ 333   3                  {
+ 334   4                     // Prepare data_out for transmission
+ 335   4                     gEp0Status.wData.c[1] = 0;
+ 336   4                     gEp0Status.wData.c[0] = gDeviceStatus.bRemoteWakeupStatus;
+ 337   4                     gEp0Status.wData.c[0] |= gDeviceStatus.bSelfPoweredStatus;
+ 338   4                  }
+ 339   3                  break;
+ 340   3      
+ 341   3               // Interface
+ 342   3               case CMD_RECIP_IF:
+ 343   3                  // Prepare data_out for transmission
+ 344   3                  gEp0Status.wData.i = 0;
+ 345   3                  break;
+ 346   3      
+ 347   3               // Endpoint
+ 348   3               case CMD_RECIP_EP:
+ 349   3                  // Prepare data_out for transmission
+ 350   3                  gEp0Status.wData.i = 0;
+ 351   3                  if (GetEpStatus(gEp0Command.wIndex.i) == EP_HALTED)
+ 352   3                     gEp0Status.wData.c[0] |= 0x01;
+ 353   3                  break;
+ 354   3      
+ 355   3               // Other cases unsupported
+ 356   3               default:
+ 357   3                  bEpState = EP_ERROR;
+ 358   3                  break;
+ 359   3            }
+ 360   2      
+ 361   2            // Endpoint0 state assignment
+ 362   2            bEpState = EP_TX;
+ 363   2      
+ 364   2            // Point ep0 data pointer to transmit data_out
+ 365   2            gEp0Status.pData = (BYTE *)&gEp0Status.wData.i;
+C51 COMPILER V7.06   F34X_USB_STANDARD_REQUESTS                                            08/25/2012 02:16:54 PAGE 7   
+
+ 366   2            gEp0Status.uNumBytes = 2;
+ 367   2         }
+ 368   1         gEp0Status.bEpState = bEpState;
+ 369   1      }
+ 370          
+ 371          //-----------------------------------------------------------------------------
+ 372          // GetDescriptorRequest
+ 373          //-----------------------------------------------------------------------------
+ 374          //
+ 375          // Return Value : None
+ 376          // Parameters   : None
+ 377          //
+ 378          //-----------------------------------------------------------------------------
+ 379          void GetDescriptorRequest ()
+ 380          {
+ 381   1         WORD wTempInt;
+ 382   1      
+ 383   1         // This request is valid in all device states
+ 384   1         // Switch on requested descriptor (Value field)
+ 385   1         switch (gEp0Command.wValue.c[0])
+ 386   1         {
+ 387   2            // Device Descriptor Request
+ 388   2            case DSC_DEVICE:
+ 389   2               // Get size of the requested descriptor
+ 390   2               uNumBytes = STD_DSC_SIZE;
+ 391   2               // Prep to send the requested length
+ 392   2               if (uNumBytes > gEp0Command.wLength.i)
+ 393   2               {
+ 394   3                  uNumBytes = gEp0Command.wLength.i;
+ 395   3               }
+ 396   2               // Point data pointer to the requested descriptor
+ 397   2               gEp0Status.pData = (void*)&gDescriptorMap.bStdDevDsc;
+ 398   2               bEpState = EP_TX;
+ 399   2               break;
+ 400   2      
+ 401   2            // Configuration Descriptor Request
+ 402   2            case DSC_CONFIG:
+ 403   2               // Make sure requested descriptor exists
+ 404   2               if (gEp0Command.wValue.c[1] >
+ 405   2               gDescriptorMap.bStdDevDsc[std_bNumConfigurations])
+ 406   2               {
+ 407   3                  bEpState = EP_ERROR;
+ 408   3               }
+ 409   2               else
+ 410   2               {
+ 411   3                  // Get total length of this configuration descriptor
+ 412   3                  // (includes all associated interface and endpoints)
+ 413   3                  wTempInt.c[1] = gDescriptorMap.bCfg1[cfg_wTotalLength_lsb];
+ 414   3                  wTempInt.c[0] = gDescriptorMap.bCfg1[cfg_wTotalLength_msb];
+ 415   3                  uNumBytes = wTempInt.i;
+ 416   3      
+ 417   3                  // Prep to transmit the requested length
+ 418   3                  if (uNumBytes > gEp0Command.wLength.i)
+ 419   3                  {
+ 420   4                     uNumBytes = gEp0Command.wLength.i;
+ 421   4                  }
+ 422   3                  // Point data pointer to requested descriptor
+ 423   3                  gEp0Status.pData = &gDescriptorMap.bCfg1;
+ 424   3                  bEpState = EP_TX;
+ 425   3               }
+ 426   2               break;
+ 427   2         }
+C51 COMPILER V7.06   F34X_USB_STANDARD_REQUESTS                                            08/25/2012 02:16:54 PAGE 8   
+
+ 428   1         gEp0Status.uNumBytes = uNumBytes;
+ 429   1         gEp0Status.bEpState = bEpState;
+ 430   1      }
+ 431          
+ 432          //-----------------------------------------------------------------------------
+ 433          // GetConfigurationRequest
+ 434          //-----------------------------------------------------------------------------
+ 435          //
+ 436          // Return Value : None
+ 437          // Parameters   : None
+ 438          //
+ 439          //-----------------------------------------------------------------------------
+ 440          void GetConfigurationRequest ()
+ 441          {
+ 442   1         // Length field must be 1; Index field must be 0;
+ 443   1         // Value field must be 0
+ 444   1         if ((gEp0Command.wLength.i != 1) || (gEp0Command.wIndex.i) ||
+ 445   1         (gEp0Command.wValue.i) || (gDeviceStatus.bDevState == DEV_DEFAULT))
+ 446   1         {
+ 447   2            bEpState = EP_ERROR;
+ 448   2         }
+ 449   1      
+ 450   1         else if (gDeviceStatus.bDevState == DEV_ADDRESS)
+ 451   1         {
+ 452   2            // Prepare data_out for transmission
+ 453   2            gEp0Status.wData.i = 0;
+ 454   2            // Point ep0 data pointer to transmit data_out
+ 455   2            gEp0Status.pData = (BYTE *)&gEp0Status.wData.i;
+ 456   2            // ep0 state assignment
+ 457   2            bEpState = EP_TX;
+ 458   2         }
+ 459   1      
+ 460   1         else
+ 461   1         {
+ 462   2            // Index to desired field
+ 463   2            gEp0Status.pData = (void *)&gDescriptorMap.bCfg1[cfg_bConfigurationValue];
+ 464   2      
+ 465   2            // ep0 state assignment
+ 466   2            bEpState = EP_TX;
+ 467   2         }
+ 468   1         gEp0Status.uNumBytes = 1;
+ 469   1         gEp0Status.bEpState = bEpState;
+ 470   1      }
+ 471          
+ 472          //-----------------------------------------------------------------------------
+ 473          // GetInterfaceRequest
+ 474          //-----------------------------------------------------------------------------
+ 475          //
+ 476          // Return Value : None
+ 477          // Parameters   : None
+ 478          //
+ 479          //-----------------------------------------------------------------------------
+ 480          void GetInterfaceRequest ()
+ 481          {
+ 482   1         // Value field must be 0; Length field must be 1
+ 483   1         if ((gEp0Command.wValue.i) || (gEp0Command.wLength.i != 1) ||
+ 484   1         (gDeviceStatus.bDevState != DEV_CONFIG))
+ 485   1         {
+ 486   2            bEpState = EP_ERROR;
+ 487   2         }
+ 488   1      
+ 489   1         else
+C51 COMPILER V7.06   F34X_USB_STANDARD_REQUESTS                                            08/25/2012 02:16:54 PAGE 9   
+
+ 490   1         {
+ 491   2            // Make sure requested interface exists
+ 492   2            if (gEp0Command.wIndex.i > gDeviceStatus.bNumInterf - 1)
+ 493   2               bEpState = EP_ERROR;
+ 494   2            else
+ 495   2            {
+ 496   3               // Get current interface setting
+ 497   3               gEp0Status.pData = (void *)(&gDeviceStatus.IfStatus)->bCurrentAlt;
+ 498   3      
+ 499   3               // Length must be 1
+ 500   3               gEp0Status.uNumBytes = 1;
+ 501   3               bEpState = EP_TX;
+ 502   3            }
+ 503   2         }
+ 504   1         gEp0Status.bEpState = bEpState;
+ 505   1      }
+ 506          
+ 507          //-----------------------------------------------------------------------------
+ 508          // End Of File
+ 509          //-----------------------------------------------------------------------------
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    608    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      6       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

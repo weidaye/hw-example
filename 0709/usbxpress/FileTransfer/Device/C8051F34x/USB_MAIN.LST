@@ -1,0 +1,378 @@
+C51 COMPILER V7.06   USB_MAIN                                                              07/11/2010 22:30:40 PAGE 1   
+
+
+C51 COMPILER V7.06, COMPILATION OF MODULE USB_MAIN
+OBJECT MODULE PLACED IN USB_MAIN.OBJ
+COMPILER INVOKED BY: D:\Keil\C51\BIN\c51.exe USB_MAIN.c DB OE
+
+stmt level    source
+
+   1          // File best viewed using Tab Size of 4 Characters
+   2          // Author DM   DATE  4-4-03
+   3          // Modified CS DATE  8-25-03
+   4          // Modified PKC DATE 1-24-06 (changed 'F320.h to 'F340.h)
+   5          // Modified PKC DATE 10-11-06 (changed USBXpress API interrupt to 17)
+   6          // This example illustrates usage of the USB_API.lib
+   7          // DO NOT locate code segments at 0x1400 to 0x4000
+   8          // These are used for non-voltile storage for transmitted data.
+   9          
+  10          // Include files
+  11          #include <c8051f340.h>     // Header file for SiLabs c8051f34x
+  12          #include <stddef.h>        // Used for NULL pointer definition
+  13          #include "USB_API.h"    // Header file for USB_API.lib
+  14          
+  15          // Bit Definitions
+  16          sbit  Led1  =  P2^2; // LED='1' means ON
+  17          sbit  Led2  =  P2^3; // These blink to indicate data transmission
+  18          
+  19          // Constants Definitions
+  20          #define  NUM_STG_PAGES  40 // Total number of flash pages to be used for file storage
+  21          #define MAX_BLOCK_SIZE_READ   64 // Use the maximum read block size of 64 bytes //Block_Read函数一次读取的
+             -最大字节
+  22          
+  23          #define MAX_BLOCK_SIZE_WRITE 4096   // Use the maximum write block size of 4096 bytes
+  24          #define  FLASH_PAGE_SIZE   512           //  Size of each flash page
+  25          #define  BLOCKS_PR_PAGE FLASH_PAGE_SIZE/MAX_BLOCK_SIZE_READ  // 512/64 = 8
+  26          #define MAX_NUM_BYTES   FLASH_PAGE_SIZE*NUM_STG_PAGES  //512*40=30
+  27          #define MAX_NUM_BLOCKS  BLOCKS_PR_PAGE*NUM_STG_PAGES   //8*40
+  28          
+  29          
+  30          
+  31          // Message Types
+  32          #define  READ_MSG 0x00  // Message types for communication with host
+  33          #define  WRITE_MSG   0x01
+  34          #define  SIZE_MSG 0x02
+  35          #define DELAYED_READ_MSG   0x05
+  36          
+  37          // Machine States
+  38          #define  ST_WAIT_DEV 0x01  // Wait for application to open a device instance
+  39          #define  ST_IDLE_DEV 0x02  // Device is open, wait for Setup Message from host
+  40          #define  ST_RX_SETUP 0x04  // Received Setup Message, decode and wait for data
+  41          #define  ST_RX_FILE  0x08  // Receive file data from host
+  42          #define  ST_TX_FILE  0x10  // Transmit file data to host
+  43          #define  ST_TX_ACK   0x20  // Transmit ACK 0xFF back to host after every 8 packets
+  44          #define  ST_ERROR 0x80  // Error state
+  45          
+  46          // No such thing as a block of data anymore since it is variable between 1 and 1024
+  47          // So comment this out
+  48          typedef struct {        // Structure definition of a block of data
+  49             BYTE  Piece[MAX_BLOCK_SIZE_READ];
+  50          }  BLOCK;
+  51          
+  52          typedef struct {        // Structure definition of a flash memory page
+  53             BYTE  FlashPage[FLASH_PAGE_SIZE];
+  54          }  PAGE;
+C51 COMPILER V7.06   USB_MAIN                                                              07/11/2010 22:30:40 PAGE 2   
+
+  55          
+  56          xdata BLOCK TempStorage[BLOCKS_PR_PAGE];  // Temporary storage of between flash writes
+  57          
+  58          //data   BYTE code * PageIndices[20]   =  {0x1400,0x1600,0x1800,0x1A00,0x1C00,0x1E00,0x2000,0x2200,0x2400,
+             -0x2600
+  59          //                         ,0x2800,0x2A00,0x2C00,0x2E00,0x3000,0x3200,0x3400,0x3600,0x3800,0x3A00};
+  60          //data  BYTE code * PageIndices[20]   =  {0x2200,0x2400,0x2600,0x2800,0x2A00,0x2C00,0x2E00,0x3000,0x3200,0
+             -x3400
+  61           //                          ,0x3600,0x3800,0x3A00,0x3C00,0x3E00,0x4000,0x4200,0x4400,0x4600};
+  62          data  BYTE code * PageIndices[30]   =  {0x2200,0x2400,0x2600,0x2800,0x2A00,0x2C00,0x2E00,0x3000,0x3200,0x3
+             -400
+  63                                                 ,0x3600,0x3800,0x3A00,0x3C00,0x3E00,0x4000,0x4200,0x4400,0x4600,0x4
+             -800
+  64                                                 ,0x4A00,0x4C00,0x4E00,0x5000,0x5200,0x5400,0x5600,0x5800,0x5A00,0x5
+             -C00
+  65                  //                                                                 ,0x5E00,0x6000,0x6200,0x6400,0x6600,0x6800,0x6A00,0x6C00,0x6E00,0x7000
+  66                                                                                          };//设备接收上位机数据的FLASH地址，可以接收15K的文件。
+  67          
+  68          
+  69          data  UINT  BytesToRead;   // Total number of bytes to read from host
+  70          data  UINT  WriteStageLength; // Current write transfer stage length
+  71          data  UINT  ReadStageLength; //  Current read transfer stage length
+  72          data  BYTE  Buffer[3];     // Buffer for Setup messages
+  73          data  UINT  NumBytes;      // Number of Blocks for this transfer
+  74          data  BYTE  NumBlocks;
+  75          data  UINT  BytesRead;     // Number of Bytes Read
+  76          data  BYTE  M_State;    // Current Machine State
+  77          data  UINT  BytesWrote;    // Number of Bytes Written
+  78          data  BYTE  BlockIndex;    // Index of Current Block in Page
+  79          data  BYTE  PageIndex;     // Index of Current Page in File
+  80          data  BYTE  BlocksWrote;   // Total Number of Blocks Written
+  81          data  BYTE* ReadIndex;
+  82          data  UINT  BytesToWrite;
+  83          
+  84          /*** [BEGIN] USB Descriptor Information [BEGIN] ***/
+  85          code const UINT USB_VID = 0x10C4;
+  86          code const UINT USB_PID = 0xEA61;
+  87          code const BYTE USB_MfrStr[] = {0x1A,0x03,'S',0,'i',0,'l',0,'i',0,'c',0,'o',0,'n',0,' ',0,'L',0,'a',0,'b',
+             -0,'s',0};                       // Manufacturer String
+  88          code const BYTE USB_ProductStr[] = {0x10,0x03,'U',0,'S',0,'B',0,' ',0,'A',0,'P',0,'I',0}; // Product Desc.
+             - String
+  89          code const BYTE USB_SerialStr[] = {0x0A,0x03,'1',0,'2',0,'3',0,'4',0};
+  90          code const BYTE USB_MaxPower = 15;            // Max current = 30 mA (15 * 2)
+  91          code const BYTE USB_PwAttributes = 0x80;      // Bus-powered, remote wakeup not supported
+  92          code const UINT USB_bcdDevice = 0x0100;       // Device release number 1.00
+  93          /*** [ END ] USB Descriptor Information [ END ] ***/
+  94          
+  95          code    BYTE   LengthFile[3]  _at_  0x2000;
+  96             // {Length(Low Byte), Length(High Byte), Number of Blocks}
+  97          
+  98          void  Port_Init(void);        // Initialize Ports Pins and Enable Crossbar
+  99          void  State_Machine(void);    // Determine new state and act on current state
+ 100          void  Receive_Setup(void);    // Receive and decode setup packet from host
+ 101          void  Receive_File(void);        // Receive file data from host
+ 102          //void   Suspend_Device(void);      //  Place the device in suspend mode
+ 103          //void  Page_Erase(BYTE*) small;   // Erase a flash page
+ 104          //void  Page_Write(BYTE*) small;   // Write a flash page
+ 105          void  Page_Erase(BYTE*);   // Erase a flash page
+ 106          void  Page_Write(BYTE*);   // Write a flash page
+ 107          
+ 108          
+ 109          
+C51 COMPILER V7.06   USB_MAIN                                                              07/11/2010 22:30:40 PAGE 3   
+
+ 110          //-----------------------------------------------------------------------------
+ 111          // Main Routine
+ 112          //-----------------------------------------------------------------------------
+ 113          void main(void)
+ 114          {
+ 115   1         PCA0MD &= ~0x40;              // Disable Watchdog timer
+ 116   1      
+ 117   1         USB_Clock_Start();                     // Init USB clock *before* calling USB_Init
+ 118   1         USB_Init(USB_VID,USB_PID,USB_MfrStr,USB_ProductStr,USB_SerialStr,USB_MaxPower,USB_PwAttributes,USB_bcdD
+             -evice);
+ 119   1      
+ 120   1         CLKSEL |= 0x02;
+ 121   1      
+ 122   1      
+ 123   1         RSTSRC   |= 0x02;
+ 124   1      
+ 125   1         Port_Init();                  // Initialize crossbar and GPIO
+ 126   1      
+ 127   1         USB_Int_Enable();             // Enable USB_API Interrupts
+ 128   1            while (1);
+ 129   1      }
+ 130          
+ 131          void  Port_Init(void)
+ 132          {
+ 133   1         P2MDOUT  |= 0x0C;             // Port 2 pins 0,1 set high impedence
+ 134   1         XBR0  =  0x00;
+ 135   1         XBR1  =  0x40;                // Enable Crossbar
+ 136   1      }
+ 137          
+ 138          void  Page_Erase(BYTE*  Page_Address)  small
+ 139          {
+ 140   1         BYTE  EA_Save;             // Used to save state of global interrupt enable
+ 141   1         BYTE  xdata *pwrite;       // xdata pointer used to generate movx intruction
+ 142   1      
+ 143   1         EA_Save  =  EA;                  // Save current EA
+ 144   1         EA =  0;                   // Turn off interrupts
+ 145   1         pwrite   =  (BYTE xdata *)(Page_Address); // Set write pointer to Page_Address
+ 146   1         PSCTL =  0x03;             // Enable flash erase and writes
+ 147   1      
+ 148   1         FLKEY =  0xA5;             // Write flash key sequence to FLKEY
+ 149   1         FLKEY =  0xF1;
+ 150   1         *pwrite  =  0x00;             // Erase flash page using a write command
+ 151   1      
+ 152   1         PSCTL =  0x00;             // Disable flash erase and writes
+ 153   1         EA =  EA_Save;             // Restore state of EA
+ 154   1      }
+ 155          
+ 156          void  Page_Write(BYTE*  PageAddress)   small
+ 157          {
+ 158   1         BYTE  EA_Save;             // Used to save state of global interrupt enable
+ 159   1         BYTE  xdata *pwrite;       // Write Pointer
+ 160   1         BYTE  xdata *pread;           // Read Pointer
+ 161   1         UINT  x;                   // Counter for 0-512 bytes
+ 162   1      
+ 163   1         pread =  (BYTE xdata *)(TempStorage);
+ 164   1         EA_Save  =  EA;                  // Save EA
+ 165   1         EA =  0;                   // Turn off interrupts
+ 166   1         pwrite   =  (BYTE xdata *)(PageAddress);
+ 167   1         PSCTL =  0x01;             // Enable flash writes
+ 168   1         for(x = 0;  x<FLASH_PAGE_SIZE;   x++)//   Write 512 bytes
+ 169   1         {
+ 170   2            FLKEY =  0xA5;          // Write flash key sequence
+C51 COMPILER V7.06   USB_MAIN                                                              07/11/2010 22:30:40 PAGE 4   
+
+ 171   2            FLKEY =  0xF1;
+ 172   2            *pwrite  =  *pread;           // Write data byte to flash
+ 173   2      
+ 174   2            pread++;                // Increment pointers
+ 175   2            pwrite++;
+ 176   2         }
+ 177   1         PSCTL =  0x00;             // Disable flash writes
+ 178   1         EA =  EA_Save;             // Restore EA
+ 179   1      }
+ 180          
+ 181          void  State_Machine(void)
+ 182          {
+ 183   1         switch   (M_State)
+ 184   1         {
+ 185   2            case  ST_RX_SETUP:
+ 186   2               Receive_Setup();        // Receive and decode host Setup Message
+ 187   2               break;
+ 188   2            case  ST_RX_FILE:
+ 189   2               Receive_File();            // Receive File data from host
+ 190   2               break;
+ 191   2            case  ST_TX_ACK:
+ 192   2               M_State =   ST_RX_FILE;    // Ack Transmit complete, continue RX data//继续调用Receive_File()接收
+             -数据
+ 193   2               break;
+ 194   2            case  ST_TX_FILE:          // Send file data to host
+ 195   2               WriteStageLength = ((BytesToWrite - BytesWrote) > MAX_BLOCK_SIZE_WRITE)? MAX_BLOCK_SIZE_WRITE:(By
+             -tesToWrite - BytesWrote);
+ 196   2               BytesWrote  += Block_Write((BYTE*)(ReadIndex), WriteStageLength);
+ 197   2               ReadIndex += WriteStageLength;
+ 198   2      
+ 199   2               if ((BlocksWrote%8) == 0)  Led2 = ~Led2;
+ 200   2               if (BytesWrote == NumBytes)   Led2 = 0;
+ 201   2               break;
+ 202   2            default:
+ 203   2               break;
+ 204   2         }
+ 205   1      }
+ 206          
+ 207          
+ 208             // ISR for USB_API, run when API interrupts are enabled, and an interrupt is received
+ 209          void  USB_API_TEST_ISR(void)  interrupt   17
+ 210          {
+ 211   1         BYTE  INTVAL   =  Get_Interrupt_Source(); // Determine type of API interrupts
+ 212   1         if (INTVAL  &  USB_RESET)              // Bus Reset Event, go to Wait State
+ 213   1         {
+ 214   2            M_State  =  ST_WAIT_DEV;
+ 215   2         }
+ 216   1      
+ 217   1         if (INTVAL  &  DEVICE_OPEN)            // Device opened on host, go to Idle
+ 218   1         {
+ 219   2            M_State  =  ST_IDLE_DEV;
+ 220   2         }
+ 221   1      
+ 222   1         if (INTVAL  &  TX_COMPLETE)
+ 223   1         {
+ 224   2            if (M_State == ST_RX_FILE)          // Ack Transmit complete, go to RX state   //0xFF发送完成
+ 225   2            {
+ 226   3               M_State  =  (ST_TX_ACK);
+ 227   3            }
+ 228   2            if (M_State == ST_TX_FILE)          // File block transmit complete, go to TX state
+ 229   2            {
+ 230   3               M_State  =  (BytesWrote == BytesToWrite) ? ST_IDLE_DEV :ST_TX_FILE;  // Go to Idle when done
+C51 COMPILER V7.06   USB_MAIN                                                              07/11/2010 22:30:40 PAGE 5   
+
+ 231   3            }
+ 232   2         }
+ 233   1         if (INTVAL  &  RX_COMPLETE)            // RX Complete, go to RX Setup or RX file state  //上位机执行完S
+             -I_Write()后会产生RX_COMPLETE中断
+ 234   1         {
+ 235   2            M_State  =  (M_State == ST_IDLE_DEV) ? ST_RX_SETUP : ST_RX_FILE;
+ 236   2         }
+ 237   1         if (INTVAL  &  DEVICE_CLOSE)           // Device closed, wait for re-open
+ 238   1         {
+ 239   2            M_State  =  ST_WAIT_DEV;
+ 240   2         }
+ 241   1         if (INTVAL  &  FIFO_PURGE)             // Fifo purged, go to Idle State
+ 242   1         {
+ 243   2            M_State  =  ST_IDLE_DEV;
+ 244   2         }
+ 245   1      
+ 246   1         State_Machine();                    // Call state machine routine
+ 247   1      }
+ 248          
+ 249          void  Receive_Setup(void)
+ 250          {
+ 251   1         BytesRead   =  Block_Read(&Buffer,  3);      // Read Setup Message
+ 252   1      
+ 253   1         if (Buffer[0]  == READ_MSG)            // Check See if Read File Setup
+ 254   1         {
+ 255   2            PageIndex   =  0;                // Reset Index
+ 256   2            NumBlocks   =  LengthFile[2];       // Read NumBlocks from flash stg
+ 257   2            NumBlocks   = (NumBlocks > MAX_NUM_BLOCKS)?  MAX_NUM_BLOCKS:   NumBlocks; // only write as many byte
+             -s
+ 258   2                                          // as we have space available
+ 259   2            Buffer[0]   =  SIZE_MSG;            // Send host size of transfer message
+ 260   2            Buffer[1]   =  LengthFile[1];
+ 261   2            Buffer[2]   =  LengthFile[0];
+ 262   2            BytesToWrite   =  Buffer[1]   +  256*Buffer[2];
+ 263   2            BytesWrote  =  Block_Write((BYTE*)&Buffer,   3);//Block_Write()执行完后会产生TX_COMPLETE中断，但是由
+             -于Receive_Setup()在
+ 264   2                                                                                                        //State_Machine()中，State_Machine()在USB_API_TEST_ISR()中，
+ 265   2                                                                                                        //所以要等Receive_Setup()执行完后才产生中断。
+ 266   2            M_State  =  ST_TX_FILE;             // Go to TX data state
+ 267   2            BytesWrote  =  0;
+ 268   2            ReadIndex   =  PageIndices[0];
+ 269   2            Led2  =  1;
+ 270   2         }
+ 271   1         else  // Otherwise assume Write Setup Packet
+ 272   1         {
+ 273   2            BytesToRead =  Buffer[1]   +  256*Buffer[2];//接收到的写数据包长度为(低字节+高字节左移8位)
+ 274   2            NumBlocks   =  (BYTE)(BytesToRead/MAX_BLOCK_SIZE_READ);  // Find NumBlocks
+ 275   2      
+ 276   2            if (BytesToRead > MAX_NUM_BYTES)                // State Error if transfer too big  //大于10K错误
+ 277   2            {
+ 278   3               M_State = ST_ERROR;
+ 279   3            }
+ 280   2            else
+ 281   2            {
+ 282   3      
+ 283   3               if (BytesToRead%MAX_BLOCK_SIZE_READ)   NumBlocks++;   // Increment NumBlocks for last partial blo
+             -ck
+ 284   3      
+ 285   3               TempStorage->Piece[0]   =  Buffer[2];//Buffer[2]地址是2000
+ 286   3               TempStorage->Piece[1]   =  Buffer[1];//Buffer[1]地址是2001
+ 287   3               TempStorage->Piece[2]   =  NumBlocks;//包含的block的个数，一个block包含的最大字节数为64，NumBlock
+             -s地址是2002
+C51 COMPILER V7.06   USB_MAIN                                                              07/11/2010 22:30:40 PAGE 6   
+
+ 288   3      
+ 289   3               // Write Values to Flash
+ 290   3               Page_Erase(0x2000);                       // Store file data to flash
+ 291   3               Page_Write(0x2000);
+ 292   3      
+ 293   3               PageIndex   =  0;                         // Reset Index
+ 294   3               BlockIndex  =  0;
+ 295   3               BytesRead   =  0;
+ 296   3               Led1  =  1;
+ 297   3               M_State = ST_RX_FILE;                        // Go to RX data state
+ 298   3            }
+ 299   2         }
+ 300   1      }
+ 301          
+ 302          void  Receive_File(void)
+ 303          {
+ 304   1         ReadStageLength = ((BytesToRead - BytesRead) > MAX_BLOCK_SIZE_READ)? MAX_BLOCK_SIZE_READ:(BytesToRead -
+             - BytesRead);//读取长度是否大于64
+ 305   1      
+ 306   1         BytesRead   += Block_Read((BYTE*)(&TempStorage[BlockIndex]), ReadStageLength);   // Read Block
+ 307   1      
+ 308   1         BlockIndex++;
+ 309   1         // If device has received as many bytes as fit on one FLASH page, disable interrupts,
+ 310   1         // write page to flash, reset packet index, enable interrupts
+ 311   1         // Send handshake packet 0xFF to host after FLASH write
+ 312   1         if ((BlockIndex   == (BLOCKS_PR_PAGE)) || (BytesRead  == BytesToRead)) //读完一页
+ 313   1         {
+ 314   2            Page_Erase((BYTE*)(PageIndices[PageIndex]));
+ 315   2            Page_Write((BYTE*)(PageIndices[PageIndex]));
+ 316   2            PageIndex++;
+ 317   2            Led1 = ~Led1;
+ 318   2            BlockIndex  =  0;
+ 319   2            Buffer[0]   =  0xFF;
+ 320   2            Block_Write(Buffer,  1);    // Send handshake Acknowledge to host//发送FF给上位机，Block_Write()数据
+             -发送完成会产生TX_COMPLETE中断
+ 321   2         }
+ 322   1      
+ 323   1         // Go to Idle state if last packet has been received
+ 324   1         if (BytesRead  == BytesToRead)   {M_State =  ST_IDLE_DEV;   Led1  =  0;}
+ 325   1      }
+ 326          
+ 327          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    850    ----
+   CONSTANT SIZE    =     60    ----
+   XDATA SIZE       =    512    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     85       3
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

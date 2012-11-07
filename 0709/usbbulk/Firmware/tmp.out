@@ -1,0 +1,11 @@
+
+BL51 BANKED LINKER/LOCATER V5.03 - SN: K1DZP-5IUSHE
+COPYRIGHT KEIL ELEKTRONIK GmbH 1987 - 2002
+"D:\0709\usbbulk\Firmware\F34x_USB_Descriptors.obj",
+"D:\0709\usbbulk\Firmware\F34x_USB_Main.obj",
+"D:\0709\usbbulk\Firmware\F34x_USB_Standard_Requests.obj",
+"D:\0709\usbbulk\Firmware\F34x_USB_Utilities.obj",
+"D:\0709\usbbulk\Firmware\F34x_USB_ISR.obj"  TO "D:\0709\usbbulk\Firmware\F34x_USB0_Bulk" RS(256) PL(68) PW(78)  
+
+Program Size: data=161.0 xdata=512 code=3512
+LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)

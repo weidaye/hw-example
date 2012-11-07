@@ -1,0 +1,158 @@
+C51 COMPILER V7.06   F34X_USB_DESCRIPTORS                                                  08/25/2012 02:16:54 PAGE 1   
+
+
+C51 COMPILER V7.06, COMPILATION OF MODULE F34X_USB_DESCRIPTORS
+OBJECT MODULE PLACED IN F34x_USB_Descriptors.OBJ
+COMPILER INVOKED BY: c:\Keil\C51\BIN\c51.exe F34x_USB_Descriptors.c DB OE BR
+
+stmt level    source
+
+   1          //-----------------------------------------------------------------------------
+   2          // F34x_USB_Descriptors.c
+   3          //-----------------------------------------------------------------------------
+   4          // Copyright 2005 Silicon Laboratories, Inc.
+   5          // http://www.silabs.com
+   6          //
+   7          // Program Description:
+   8          //
+   9          // Source file for USB firmware. Includes descriptor data structures
+  10          // (device, configuration, interface, endpoint).
+  11          //
+  12          //
+  13          // How To Test:    See Readme.txt
+  14          //
+  15          //
+  16          // FID:            34X000005
+  17          // Target:         C8051F34x
+  18          // Tool chain:     Keil C51 7.50 / Keil EVAL C51
+  19          //                 Silicon Laboratories IDE version 2.6
+  20          // Command Line:   See Readme.txt
+  21          // Project Name:   F34x_USB_Bulk
+  22          //
+  23          //
+  24          // Release 1.3
+  25          //    -All changes by GP
+  26          //    -21 NOV 2005
+  27          //    -Changed revision number to match project revision
+  28          //     No content changes to this file
+  29          //    -Modified file to fit new formatting guidelines
+  30          //    -Changed file name from usb_desc.c
+  31          //
+  32          //
+  33          // Release 1.2
+  34          //    -Initial Revision (JS/CS/JM)
+  35          //    -XX OCT 2003
+  36          //
+  37          
+  38          //-----------------------------------------------------------------------------
+  39          // Includes
+  40          //-----------------------------------------------------------------------------
+  41          
+  42          #include "F34x_USB_Main.h"
+  43          #include "F34x_USB_Structs.h"
+  44          #include "F34x_USB_Registers.h"
+  45          #include "F34x_USB_Request.h"
+  46          #include "F34x_USB_Descriptors.h"
+  47          
+  48          //-----------------------------------------------------------------------------
+  49          // Global Constants
+  50          //-----------------------------------------------------------------------------
+  51          
+  52          // All descriptors are contained in the global structure <gDescriptorMap>.
+  53          // This structure contains BYTE arrays for the standard device descriptor
+  54          // and all configurations. The lengths of the configuration arrays are
+  55          // defined by the number of interface and endpoint descriptors required
+C51 COMPILER V7.06   F34X_USB_DESCRIPTORS                                                  08/25/2012 02:16:54 PAGE 2   
+
+  56          // for the particular configuration (these constants are named
+  57          // CFG1_IF_DSC and CFG1_EP_DSC for configuration1).
+  58          //
+  59          // The entire gDescriptorMap structure is initialized below in
+  60          // codespace.
+  61          
+  62          DESCRIPTORS code gDescriptorMap = {
+  63          
+  64          //---------------------------
+  65          // Begin Standard Device Descriptor (structure element stddevdsc)
+  66          //---------------------------
+  67             18,                        // bLength
+  68             0x01,                      // bDescriptorType
+  69             0x00, 0x02,                // bcdUSB (lsb first)
+  70             0x00,                      // bDeviceClass
+  71             0x00,                      // bDeviceSubClass
+  72             0x00,                      // bDeviceProtocol
+  73             64,                        // bMaxPacketSize0
+  74             0xC4, 0x10,                // idVendor (lsb first)
+  75             0x03, 0x00,                // idProduct (lsb first)
+  76             0x00, 0x00,                // bcdDevice (lsb first)
+  77             0x00,                      // iManufacturer
+  78             0x00,                      // iProduct
+  79             0x00,                      // iSerialNumber
+  80             0x01,                      // bNumConfigurations
+  81          
+  82          //---------------------------
+  83          // Begin Configuration 1 (structure element cfg1)
+  84          //---------------------------
+  85          
+  86             // Begin Descriptor: Configuration 1
+  87             0x09,                      // Length
+  88             0x02,                      // Type
+  89             0x20, 0x00,                // TotalLength (lsb first)
+  90             0x01,                      // NumInterfaces
+  91             0x01,                      // bConfigurationValue
+  92             0x00,                      // iConfiguration
+  93             0x80,                      // bmAttributes (no remote wakeup)
+  94             0x0F,                      // MaxPower (*2mA)
+  95          
+  96             // Begin Descriptor: Interface0, Alternate0
+  97             0x09,                      // bLength
+  98             0x04,                      // bDescriptorType
+  99             0x00,                      // bInterfaceNumber
+ 100             0x00,                      // bAlternateSetting
+ 101             0x02,                      // bNumEndpoints
+ 102             0x00,                      // bInterfaceClass
+ 103             0x00,                      // bInterfaceSubClass
+ 104             0x00,                      // bInterfaceProcotol
+ 105             0x00,                      // iInterface
+ 106          
+ 107             // Begin Descriptor: Endpoint1, Interface0, Alternate0
+ 108             0x07,                      // bLength
+ 109             0x05,                      // bDescriptorType
+ 110             0x81,                      // bEndpointAddress (ep1, IN)
+ 111             0x02,                      // bmAttributes (Bulk)
+ 112             0x40, 0x00,                // wMaxPacketSize (lsb first)
+ 113             0x05,                      // bInterval
+ 114          
+ 115             // Begin Descriptor: Endpoint2, Interface0, Alternate0
+ 116             0x07,                      // bLength
+ 117             0x05,                      // bDescriptorType
+C51 COMPILER V7.06   F34X_USB_DESCRIPTORS                                                  08/25/2012 02:16:54 PAGE 3   
+
+ 118             0x02,                      // bEndpointAddress (ep2, OUT)
+ 119             0x02,                      // bmAttributes (Bulk)
+ 120             0x40, 0x00,                // wMaxPacketSize (lsb first)
+ 121             0x05,                      // bInterval
+ 122          
+ 123          //---------------------------
+ 124          // End Configuration 1
+ 125          //---------------------------
+ 126          
+ 127          };
+ 128          
+ 129          //-----------------------------------------------------------------------------
+ 130          // End Of File
+ 131          //-----------------------------------------------------------------------------
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   ----    ----
+   CONSTANT SIZE    =     50    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

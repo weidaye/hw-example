@@ -1,0 +1,3 @@
+"USB_MAIN.obj" 
+TO "FileTransfer" 
+RAMSIZE(256) 
